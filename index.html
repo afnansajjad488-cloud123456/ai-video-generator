@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -159,7 +160,6 @@
     }
 
     @media (max-width: 600px) {
-
       .container {
         padding: 20px 12px;
       }
@@ -194,8 +194,7 @@
       <div class="info">
         🤖 <strong>Automatic AI Mode:</strong>
         Topic box khali chhor dein. Gemini khud interesting topic generate karega,
-        phir script, scenes, visuals, ElevenLabs voice aur final video automatically
-        create hogi.
+        phir script, scenes, visuals, voice aur final video automatically create hogi.
       </div>
 
       <label for="topic">
@@ -248,7 +247,7 @@ Duniya ka sab se ajeeb janwar">
       </div>
 
       <div class="footer">
-        Powered by n8n + Gemini + ElevenLabs
+        Powered by n8n + Gemini + AI Voice
       </div>
 
     </div>
@@ -259,19 +258,19 @@ Duniya ka sab se ajeeb janwar">
   <script>
 
     /*
-      =====================================================
-      n8n PRODUCTION WEBHOOK
-      =====================================================
+    =====================================================
+    n8n WEBHOOK
+    =====================================================
     */
 
     const WEBHOOK_URL =
-      "https://afnan804302.app.n8n.cloud/webhook/generate-short";
+      "https://afnan804302.app.n8n.cloud/webhook-test/generate-short";
 
 
     /*
-      =====================================================
-      ELEMENTS
-      =====================================================
+    =====================================================
+    ELEMENTS
+    =====================================================
     */
 
     const topicInput =
@@ -297,9 +296,9 @@ Duniya ka sab se ajeeb janwar">
 
 
     /*
-      =====================================================
-      STATUS FUNCTION
-      =====================================================
+    =====================================================
+    STATUS FUNCTION
+    =====================================================
     */
 
     function showStatus(message) {
@@ -312,9 +311,9 @@ Duniya ka sab se ajeeb janwar">
 
 
     /*
-      =====================================================
-      GENERATE VIDEO
-      =====================================================
+    =====================================================
+    GENERATE VIDEO
+    =====================================================
     */
 
     async function generateVideo() {
@@ -324,7 +323,7 @@ Duniya ka sab se ajeeb janwar">
 
 
       /*
-        Reset previous video
+      Reset previous video
       */
 
       videoContainer.style.display =
@@ -336,7 +335,7 @@ Duniya ka sab se ajeeb janwar">
 
 
       /*
-        Disable button
+      Disable button
       */
 
       generateBtn.disabled = true;
@@ -346,7 +345,7 @@ Duniya ka sab se ajeeb janwar">
 
 
       /*
-        Show progress
+      Show progress
       */
 
       showStatus(
@@ -358,7 +357,7 @@ Duniya ka sab se ajeeb janwar">
 
         "3️⃣ Images prepare ho rahi hain...\n" +
 
-        "4️⃣ ElevenLabs voice generate kar raha hai...\n" +
+        "4️⃣ AI voice generate ho rahi hai...\n" +
 
         "5️⃣ Video assemble ho rahi hai...\n\n" +
 
@@ -369,34 +368,46 @@ Duniya ka sab se ajeeb janwar">
       try {
 
         /*
-          =================================================
-          REQUEST BODY
-          =================================================
+        =================================================
+        REQUEST BODY
+        =================================================
 
-          Agar topic khali hai:
-          {}
+        prompt:
+        User ka topic agar diya gaya hai.
 
-          Gemini automatic topic generate karega.
+        Agar topic empty hai to:
+        "Create my video"
 
-          Agar user topic deta hai:
-          { topic: "..." }
+        user:
+        Website se request aa rahi hai.
         */
 
-        let requestBody = {};
+        const requestBody = {
 
-        if (topic !== "") {
+          prompt:
+            topic !== ""
+              ? topic
+              : "Create my video",
 
-          requestBody = {
-            topic: topic
-          };
+          user:
+            "website",
 
-        }
+          topic:
+            topic
+
+        };
+
+
+        console.log(
+          "Sending to n8n:",
+          requestBody
+        );
 
 
         /*
-          =================================================
-          SEND REQUEST TO n8n
-          =================================================
+        =================================================
+        SEND REQUEST TO n8n
+        =================================================
         */
 
         const response =
@@ -416,9 +427,9 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          =================================================
-          CHECK HTTP RESPONSE
-          =================================================
+        =================================================
+        CHECK HTTP RESPONSE
+        =================================================
         */
 
         if (!response.ok) {
@@ -433,9 +444,9 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          =================================================
-          READ RESPONSE
-          =================================================
+        =================================================
+        READ RESPONSE
+        =================================================
         */
 
         const data =
@@ -449,9 +460,9 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          =================================================
-          FIND VIDEO URL
-          =================================================
+        =================================================
+        FIND VIDEO URL
+        =================================================
         */
 
         const videoUrl =
@@ -462,9 +473,9 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          =================================================
-          VIDEO URL CHECK
-          =================================================
+        =================================================
+        VIDEO URL CHECK
+        =================================================
         */
 
         if (!videoUrl) {
@@ -483,9 +494,9 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          =================================================
-          SHOW VIDEO
-          =================================================
+        =================================================
+        SHOW VIDEO
+        =================================================
         */
 
         videoPlayer.src =
@@ -499,9 +510,9 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          =================================================
-          OPEN / DOWNLOAD LINKS
-          =================================================
+        =================================================
+        OPEN / DOWNLOAD LINKS
+        =================================================
         */
 
         openVideo.href =
@@ -512,9 +523,9 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          =================================================
-          SUCCESS
-          =================================================
+        =================================================
+        SUCCESS
+        =================================================
         */
 
         showStatus(
@@ -524,7 +535,7 @@ Duniya ka sab se ajeeb janwar">
 
 
         /*
-          Scroll to video
+        Scroll to video
         */
 
         videoContainer.scrollIntoView({
@@ -536,9 +547,9 @@ Duniya ka sab se ajeeb janwar">
       } catch (error) {
 
         /*
-          =================================================
-          ERROR
-          =================================================
+        =================================================
+        ERROR
+        =================================================
         */
 
         console.error(
@@ -563,9 +574,9 @@ Duniya ka sab se ajeeb janwar">
       } finally {
 
         /*
-          =================================================
-          ENABLE BUTTON
-          =================================================
+        =================================================
+        ENABLE BUTTON
+        =================================================
         */
 
         generateBtn.disabled =
@@ -580,9 +591,9 @@ Duniya ka sab se ajeeb janwar">
 
 
     /*
-      =====================================================
-      BUTTON CLICK
-      =====================================================
+    =====================================================
+    BUTTON CLICK
+    =====================================================
     */
 
     generateBtn.addEventListener(
@@ -592,9 +603,9 @@ Duniya ka sab se ajeeb janwar">
 
 
     /*
-      =====================================================
-      CTRL + ENTER
-      =====================================================
+    =====================================================
+    CTRL + ENTER
+    =====================================================
     */
 
     topicInput.addEventListener(
@@ -617,3 +628,36 @@ Duniya ka sab se ajeeb janwar">
 
 </body>
 </html>
+```
+
+**Important:** Maine aapka exact **`/webhook-test/generate-short`** URL rakha hai.
+
+Is code se n8n ko request is format mein milegi:
+
+```json
+{
+  "prompt": "Duniya ka sab se ajeeb janwar",
+  "user": "website",
+  "topic": "Duniya ka sab se ajeeb janwar"
+}
+```
+
+Agar topic box **empty** ho:
+
+```json
+{
+  "prompt": "Create my video",
+  "user": "website",
+  "topic": ""
+}
+```
+
+Aur n8n Webhook ke baad jo final response website ko bhejega, usmein ideally `video_url` hona chahiye, jaise:
+
+```json
+{
+  "video_url": "https://example.com/my-video.mp4"
+}
+```
+
+**Ek important baat:** `/webhook-test/` URL n8n ke **test mode** ke liye hota hai. Website ko permanently chalana ho to workflow **Active** karke `/webhook/generate-short` wala production URL use karna hoga.
