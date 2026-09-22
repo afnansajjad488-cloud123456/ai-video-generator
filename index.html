@@ -1,276 +1,440 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>AI Video Generator</title>
+  <title>AI Shorts Video Generator</title>
 
-<style>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-* {
-    box-sizing: border-box;
-}
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #0b0b0f;
+      color: white;
+    }
 
-body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #0b0b0f;
-    color: white;
-}
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 50px 20px;
+    }
 
-.container {
-    max-width: 800px;
-    margin: auto;
-    padding: 50px 20px;
-}
+    h1 {
+      text-align: center;
+      font-size: 42px;
+      margin-bottom: 10px;
+    }
 
-h1 {
-    text-align: center;
-    font-size: 42px;
-    margin-bottom: 10px;
-}
+    .subtitle {
+      text-align: center;
+      color: #aaa;
+      margin-bottom: 40px;
+      font-size: 16px;
+    }
 
-.subtitle {
-    text-align: center;
-    color: #aaa;
-    margin-bottom: 40px;
-}
+    .card {
+      background: #15151c;
+      padding: 25px;
+      border-radius: 18px;
+      border: 1px solid #292933;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
 
-.card {
-    background: #15151c;
-    padding: 25px;
-    border-radius: 18px;
-}
+    label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
 
-label {
-    display: block;
-    margin-bottom: 10px;
-    font-weight: bold;
-}
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      resize: vertical;
+      background: #0e0e14;
+      color: white;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 15px;
+      font-size: 16px;
+      outline: none;
+    }
 
-textarea {
-    width: 100%;
-    min-height: 120px;
-    resize: vertical;
-    background: #0e0e14;
-    color: white;
-    border: 1px solid #333;
-    border-radius: 12px;
-    padding: 15px;
-    font-size: 16px;
-}
+    textarea:focus {
+      border-color: #6c5ce7;
+    }
 
-button {
-    width: 100%;
-    margin-top: 20px;
-    padding: 15px;
-    border: none;
-    border-radius: 12px;
-    background: #6c5ce7;
-    color: white;
-    font-size: 18px;
-    font-weight: bold;
-    cursor: pointer;
-}
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      background: #6c5ce7;
+      color: white;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+    }
 
-button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+    button:hover {
+      background: #5849d6;
+    }
 
-.status {
-    margin-top: 20px;
-    text-align: center;
-    color: #aaa;
-}
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
 
-.video-box {
-    margin-top: 30px;
-    display: none;
-}
+    .status {
+      margin-top: 20px;
+      text-align: center;
+      color: #aaa;
+      line-height: 1.5;
+    }
 
-video {
-    width: 100%;
-    border-radius: 15px;
-}
+    .video-box {
+      margin-top: 30px;
+      display: none;
+    }
 
-.download {
-    display: block;
-    margin-top: 15px;
-    padding: 14px;
-    text-align: center;
-    background: #22222c;
-    color: white;
-    text-decoration: none;
-    border-radius: 10px;
-}
+    video {
+      width: 100%;
+      border-radius: 15px;
+      background: black;
+    }
 
-</style>
+    .download {
+      display: block;
+      margin-top: 15px;
+      padding: 14px;
+      text-align: center;
+      background: #22222c;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+    }
+
+    .download:hover {
+      background: #30303c;
+    }
+
+    .error {
+      color: #ff7675;
+    }
+
+    .success {
+      color: #55efc4;
+    }
+
+    .loading {
+      color: #ffeaa7;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="container">
+  <div class="container">
 
-    <h1>AI Video Generator</h1>
+    <h1>AI Shorts Generator</h1>
 
     <div class="subtitle">
-        Generate a complete AI Shorts video with one click.
+      Generate a complete AI YouTube Shorts video with one click.
     </div>
 
     <div class="card">
 
-        <label for="topic">
-            Video Topic
-        </label>
+      <label for="topic">
+        Video Topic
+      </label>
 
-        <textarea
-            id="topic"
-            placeholder="Example: Duniya ka sab se ajeeb janwar"
-        ></textarea>
+      <textarea
+        id="topic"
+        placeholder="Example: Duniya ka sab se ajeeb janwar"
+      ></textarea>
 
-        <button id="generateBtn" onclick="generateVideo()">
-            Generate Video
-        </button>
+      <button id="generateBtn" onclick="generateVideo()">
+        Generate Video
+      </button>
 
-        <div class="status" id="status">
-            Ready
-        </div>
+      <div class="status" id="status">
+        Ready — topic enter karo.
+      </div>
 
-        <div class="video-box" id="videoBox">
+      <div class="video-box" id="videoBox">
 
-            <video
-                id="video"
-                controls
-            ></video>
+        <video
+          id="video"
+          controls
+          playsinline
+        ></video>
 
-            <a
-                id="download"
-                class="download"
-                target="_blank"
-                download
-            >
-                Open / Download Video
-            </a>
+        <a
+          id="download"
+          class="download"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Open / Download Video
+        </a>
 
-        </div>
+      </div>
 
     </div>
 
-</div>
+  </div>
 
-<script>
 
-const WEBHOOK_URL =
-"https://afnan804302.app.n8n.cloud/webhook/generate-short";
+  <script>
 
-async function generateVideo() {
+    /*
+      ============================================
+      n8n WEBHOOK URL
+      ============================================
+    */
 
-    const topic =
+    const WEBHOOK_URL =
+      "https://afnan804302.app.n8n.cloud/webhook/generate-short";
+
+
+    /*
+      ============================================
+      GENERATE VIDEO
+      ============================================
+    */
+
+    async function generateVideo() {
+
+      const topic =
         document.getElementById("topic").value.trim();
 
-    const button =
+      const button =
         document.getElementById("generateBtn");
 
-    const status =
+      const status =
         document.getElementById("status");
 
-    const videoBox =
+      const videoBox =
         document.getElementById("videoBox");
 
-    const video =
+      const video =
         document.getElementById("video");
 
-    const download =
+      const download =
         document.getElementById("download");
 
 
-    if (!topic) {
+      /*
+        Check topic
+      */
+
+      if (!topic) {
+
+        status.className = "error";
 
         status.innerText =
-            "Please enter a topic.";
+          "Please pehle video topic likho.";
 
         return;
-    }
+      }
 
 
-    button.disabled = true;
+      /*
+        Start loading
+      */
 
-    videoBox.style.display = "none";
+      button.disabled = true;
 
-    status.innerText =
-        "Generating video... Please wait.";
+      button.innerText =
+        "Generating Video...";
+
+      videoBox.style.display =
+        "none";
+
+      status.className = "loading";
+
+      status.innerText =
+        "Video generate ho rahi hai... Please wait.";
 
 
-    try {
+      try {
 
-        const response = await fetch(
-            WEBHOOK_URL,
-            {
-                method: "POST",
+        /*
+          Send topic to n8n
+        */
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+        const response =
+          await fetch(WEBHOOK_URL, {
 
-                body: JSON.stringify({
-                    topic: topic
-                })
-            }
-        );
+            method: "POST",
 
+            headers: {
+              "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+
+              topic: topic
+
+            })
+
+          });
+
+
+        /*
+          Check HTTP response
+        */
 
         if (!response.ok) {
 
-            throw new Error(
-                "Server error: " + response.status
-            );
+          throw new Error(
+            "n8n server error: " +
+            response.status
+          );
+
         }
 
 
-        const result =
-            await response.json();
+        /*
+          Read n8n JSON response
+        */
 
+        const result =
+          await response.json();
+
+
+        console.log(
+          "n8n response:",
+          result
+        );
+
+
+        /*
+          Check video URL
+        */
 
         if (!result.video_url) {
 
-            throw new Error(
-                "Video URL nahi mila."
-            );
+          throw new Error(
+            "n8n response mein video_url nahi mila."
+          );
+
         }
 
 
+        /*
+          Put video URL into player
+        */
+
         video.src =
-            result.video_url;
+          result.video_url;
 
         download.href =
-            result.video_url;
+          result.video_url;
 
+
+        /*
+          Show video
+        */
 
         videoBox.style.display =
-            "block";
+          "block";
+
+
+        status.className =
+          "success";
 
         status.innerText =
-            "Video successfully generated!";
+          "✅ Video successfully generated!";
 
 
-    } catch (error) {
+        /*
+          Load video
+        */
 
-        console.error(error);
+        video.load();
 
-        status.innerText =
-            "Error: " + error.message;
 
-    } finally {
+      } catch (error) {
 
-        button.disabled = false;
+        console.error(
+          "Error:",
+          error
+        );
+
+
+        status.className =
+          "error";
+
+
+        /*
+          Friendly error messages
+        */
+
+        if (
+          error.message.includes(
+            "Failed to fetch"
+          )
+        ) {
+
+          status.innerText =
+            "❌ Connection error. n8n/CORS connection check karo.";
+
+        } else {
+
+          status.innerText =
+            "❌ Error: " +
+            error.message;
+
+        }
+
+      } finally {
+
+        /*
+          Enable button again
+        */
+
+        button.disabled =
+          false;
+
+        button.innerText =
+          "Generate Video";
+
+      }
 
     }
 
-}
 
-</script>
+    /*
+      ============================================
+      ENTER KEY SUPPORT
+      ============================================
+    */
+
+    document
+      .getElementById("topic")
+      .addEventListener(
+        "keydown",
+        function(event) {
+
+          if (
+            event.key === "Enter" &&
+            event.ctrlKey
+          ) {
+
+            generateVideo();
+
+          }
+
+        }
+      );
+
+  </script>
 
 </body>
 </html>
