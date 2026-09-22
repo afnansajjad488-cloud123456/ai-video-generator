@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>AI Shorts Video Generator</title>
+  <title>AI Urdu Shorts Generator</title>
 
   <style>
     * {
@@ -13,126 +13,168 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0b0b0f;
-      color: white;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #0f172a;
+      color: #ffffff;
     }
 
     .container {
-      max-width: 800px;
+      width: 100%;
+      max-width: 850px;
       margin: auto;
-      padding: 50px 20px;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
     }
 
     h1 {
       text-align: center;
-      font-size: 42px;
-      margin-bottom: 10px;
+      margin: 0 0 10px;
+      font-size: 32px;
     }
 
     .subtitle {
       text-align: center;
-      color: #aaa;
-      margin-bottom: 40px;
-      font-size: 16px;
+      color: #cbd5e1;
+      margin-bottom: 25px;
+      line-height: 1.5;
     }
 
-    .card {
-      background: #15151c;
-      padding: 25px;
-      border-radius: 18px;
-      border: 1px solid #292933;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    .info {
+      background: #172554;
+      color: #bfdbfe;
+      padding: 14px;
+      border-radius: 12px;
+      margin-bottom: 25px;
+      line-height: 1.5;
+      font-size: 14px;
     }
 
     label {
       display: block;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       font-weight: bold;
     }
 
     textarea {
       width: 100%;
       min-height: 120px;
-      resize: vertical;
-      background: #0e0e14;
-      color: white;
-      border: 1px solid #333;
-      border-radius: 12px;
       padding: 15px;
-      font-size: 16px;
+      border: none;
+      border-radius: 12px;
       outline: none;
+      resize: vertical;
+      background: #334155;
+      color: #ffffff;
+      font-size: 16px;
+      font-family: inherit;
     }
 
-    textarea:focus {
-      border-color: #6c5ce7;
+    textarea::placeholder {
+      color: #94a3b8;
     }
 
     button {
       width: 100%;
-      margin-top: 20px;
-      padding: 15px;
+      margin-top: 18px;
+      padding: 16px;
       border: none;
       border-radius: 12px;
-      background: #6c5ce7;
-      color: white;
+      background: #2563eb;
+      color: #ffffff;
       font-size: 18px;
       font-weight: bold;
       cursor: pointer;
+      transition: 0.2s;
     }
 
     button:hover {
-      background: #5849d6;
+      background: #1d4ed8;
     }
 
     button:disabled {
-      opacity: 0.5;
+      background: #475569;
       cursor: not-allowed;
     }
 
-    .status {
+    #status {
+      display: none;
       margin-top: 20px;
-      text-align: center;
-      color: #aaa;
-      line-height: 1.5;
+      padding: 16px;
+      border-radius: 12px;
+      background: #334155;
+      color: #e2e8f0;
+      line-height: 1.6;
+      white-space: pre-wrap;
     }
 
-    .video-box {
-      margin-top: 30px;
+    #videoContainer {
       display: none;
+      margin-top: 30px;
+    }
+
+    #videoContainer h2 {
+      margin-bottom: 15px;
     }
 
     video {
       width: 100%;
+      max-height: 600px;
       border-radius: 15px;
-      background: black;
+      background: #000000;
     }
 
-    .download {
-      display: block;
+    .links {
+      display: flex;
+      gap: 12px;
       margin-top: 15px;
-      padding: 14px;
+    }
+
+    .links a {
+      flex: 1;
       text-align: center;
-      background: #22222c;
+      padding: 13px;
+      border-radius: 10px;
+      background: #334155;
       color: white;
       text-decoration: none;
-      border-radius: 10px;
+      font-weight: bold;
     }
 
-    .download:hover {
-      background: #30303c;
+    .links a:hover {
+      background: #475569;
     }
 
-    .error {
-      color: #ff7675;
+    .footer {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      margin-top: 25px;
     }
 
-    .success {
-      color: #55efc4;
-    }
+    @media (max-width: 600px) {
 
-    .loading {
-      color: #ffeaa7;
+      .container {
+        padding: 20px 12px;
+      }
+
+      .card {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      .links {
+        flex-direction: column;
+      }
     }
   </style>
 </head>
@@ -141,48 +183,72 @@
 
   <div class="container">
 
-    <h1>AI Shorts Generator</h1>
-
-    <div class="subtitle">
-      Generate a complete AI YouTube Shorts video with one click.
-    </div>
-
     <div class="card">
 
+      <h1>🎬 AI Urdu Shorts Generator</h1>
+
+      <div class="subtitle">
+        Ek click mein complete Urdu YouTube Shorts video generate karein.
+      </div>
+
+      <div class="info">
+        🤖 <strong>Automatic AI Mode:</strong>
+        Topic box khali chhor dein. Gemini khud interesting topic generate karega,
+        phir script, scenes, visuals, ElevenLabs voice aur final video automatically
+        create hogi.
+      </div>
+
       <label for="topic">
-        Video Topic
+        Topic — Optional
       </label>
 
       <textarea
         id="topic"
-        placeholder="Example: Duniya ka sab se ajeeb janwar"
-      ></textarea>
+        placeholder="Topic khali chhor dein aur AI ko topic choose karne dein...
 
-      <button id="generateBtn" onclick="generateVideo()">
-        Generate Video
+Ya apna topic likhein, example:
+Duniya ka sab se ajeeb janwar">
+      </textarea>
+
+      <button id="generateBtn">
+        🚀 Generate Video
       </button>
 
-      <div class="status" id="status">
-        Ready — topic enter karo.
-      </div>
+      <div id="status"></div>
 
-      <div class="video-box" id="videoBox">
+      <div id="videoContainer">
+
+        <h2>🎥 Your Generated Video</h2>
 
         <video
-          id="video"
+          id="videoPlayer"
           controls
-          playsinline
-        ></video>
+          playsinline>
+        </video>
 
-        <a
-          id="download"
-          class="download"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Open / Download Video
-        </a>
+        <div class="links">
 
+          <a
+            id="openVideo"
+            href="#"
+            target="_blank">
+            🔗 Open Video
+          </a>
+
+          <a
+            id="downloadVideo"
+            href="#"
+            target="_blank"
+            download>
+            ⬇️ Download Video
+          </a>
+
+        </div>
+
+      </div>
+
+      <div class="footer">
+        Powered by n8n + Gemini + ElevenLabs
       </div>
 
     </div>
@@ -193,9 +259,9 @@
   <script>
 
     /*
-      ============================================
-      n8n WEBHOOK URL
-      ============================================
+      =====================================================
+      n8n PRODUCTION WEBHOOK
+      =====================================================
     */
 
     const WEBHOOK_URL =
@@ -203,207 +269,310 @@
 
 
     /*
-      ============================================
+      =====================================================
+      ELEMENTS
+      =====================================================
+    */
+
+    const topicInput =
+      document.getElementById("topic");
+
+    const generateBtn =
+      document.getElementById("generateBtn");
+
+    const statusBox =
+      document.getElementById("status");
+
+    const videoContainer =
+      document.getElementById("videoContainer");
+
+    const videoPlayer =
+      document.getElementById("videoPlayer");
+
+    const openVideo =
+      document.getElementById("openVideo");
+
+    const downloadVideo =
+      document.getElementById("downloadVideo");
+
+
+    /*
+      =====================================================
+      STATUS FUNCTION
+      =====================================================
+    */
+
+    function showStatus(message) {
+
+      statusBox.style.display = "block";
+
+      statusBox.innerText = message;
+
+    }
+
+
+    /*
+      =====================================================
       GENERATE VIDEO
-      ============================================
+      =====================================================
     */
 
     async function generateVideo() {
 
       const topic =
-        document.getElementById("topic").value.trim();
-
-      const button =
-        document.getElementById("generateBtn");
-
-      const status =
-        document.getElementById("status");
-
-      const videoBox =
-        document.getElementById("videoBox");
-
-      const video =
-        document.getElementById("video");
-
-      const download =
-        document.getElementById("download");
+        topicInput.value.trim();
 
 
       /*
-        Check topic
+        Reset previous video
       */
 
-      if (!topic) {
-
-        status.className = "error";
-
-        status.innerText =
-          "Please pehle video topic likho.";
-
-        return;
-      }
-
-
-      /*
-        Start loading
-      */
-
-      button.disabled = true;
-
-      button.innerText =
-        "Generating Video...";
-
-      videoBox.style.display =
+      videoContainer.style.display =
         "none";
 
-      status.className = "loading";
+      videoPlayer.removeAttribute("src");
 
-      status.innerText =
-        "Video generate ho rahi hai... Please wait.";
+      videoPlayer.load();
+
+
+      /*
+        Disable button
+      */
+
+      generateBtn.disabled = true;
+
+      generateBtn.innerText =
+        "⏳ Generating Video...";
+
+
+      /*
+        Show progress
+      */
+
+      showStatus(
+        "🤖 AI video generation started...\n\n" +
+
+        "1️⃣ Gemini topic generate kar raha hai...\n" +
+
+        "2️⃣ Urdu script aur scenes ban rahe hain...\n" +
+
+        "3️⃣ Images prepare ho rahi hain...\n" +
+
+        "4️⃣ ElevenLabs voice generate kar raha hai...\n" +
+
+        "5️⃣ Video assemble ho rahi hai...\n\n" +
+
+        "⏳ Please wait..."
+      );
 
 
       try {
 
         /*
-          Send topic to n8n
+          =================================================
+          REQUEST BODY
+          =================================================
+
+          Agar topic khali hai:
+          {}
+
+          Gemini automatic topic generate karega.
+
+          Agar user topic deta hai:
+          { topic: "..." }
         */
 
-        const response =
-          await fetch(WEBHOOK_URL, {
+        let requestBody = {};
 
-            method: "POST",
+        if (topic !== "") {
 
-            headers: {
-              "Content-Type": "application/json"
-            },
+          requestBody = {
+            topic: topic
+          };
 
-            body: JSON.stringify({
-
-              topic: topic
-
-            })
-
-          });
+        }
 
 
         /*
-          Check HTTP response
+          =================================================
+          SEND REQUEST TO n8n
+          =================================================
+        */
+
+        const response =
+          await fetch(
+            WEBHOOK_URL,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type": "application/json"
+              },
+
+              body:
+                JSON.stringify(requestBody)
+            }
+          );
+
+
+        /*
+          =================================================
+          CHECK HTTP RESPONSE
+          =================================================
         */
 
         if (!response.ok) {
 
           throw new Error(
-            "n8n server error: " +
-            response.status
+            "n8n server ne HTTP " +
+            response.status +
+            " response diya."
           );
 
         }
 
 
         /*
-          Read n8n JSON response
+          =================================================
+          READ RESPONSE
+          =================================================
         */
 
-        const result =
+        const data =
           await response.json();
 
 
         console.log(
           "n8n response:",
-          result
+          data
         );
 
 
         /*
-          Check video URL
+          =================================================
+          FIND VIDEO URL
+          =================================================
         */
 
-        if (!result.video_url) {
+        const videoUrl =
+          data.video_url ||
+          data.final_video_url ||
+          data.secure_url ||
+          data.url;
+
+
+        /*
+          =================================================
+          VIDEO URL CHECK
+          =================================================
+        */
+
+        if (!videoUrl) {
 
           throw new Error(
-            "n8n response mein video_url nahi mila."
+            "n8n response mein video_url nahi mila.\n\n" +
+            "Received response:\n" +
+            JSON.stringify(
+              data,
+              null,
+              2
+            )
           );
 
         }
 
 
         /*
-          Put video URL into player
+          =================================================
+          SHOW VIDEO
+          =================================================
         */
 
-        video.src =
-          result.video_url;
+        videoPlayer.src =
+          videoUrl;
 
-        download.href =
-          result.video_url;
+        videoPlayer.load();
 
 
-        /*
-          Show video
-        */
-
-        videoBox.style.display =
+        videoContainer.style.display =
           "block";
 
 
-        status.className =
-          "success";
+        /*
+          =================================================
+          OPEN / DOWNLOAD LINKS
+          =================================================
+        */
 
-        status.innerText =
-          "✅ Video successfully generated!";
+        openVideo.href =
+          videoUrl;
+
+        downloadVideo.href =
+          videoUrl;
 
 
         /*
-          Load video
+          =================================================
+          SUCCESS
+          =================================================
         */
 
-        video.load();
+        showStatus(
+          "✅ Video successfully generated!\n\n" +
+          "Neeche video player mein video available hai."
+        );
+
+
+        /*
+          Scroll to video
+        */
+
+        videoContainer.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
 
 
       } catch (error) {
 
+        /*
+          =================================================
+          ERROR
+          =================================================
+        */
+
         console.error(
-          "Error:",
+          "Generation error:",
           error
         );
 
 
-        status.className =
-          "error";
+        showStatus(
+          "❌ Video generate nahi hui.\n\n" +
 
+          "Error:\n" +
 
-        /*
-          Friendly error messages
-        */
+          error.message +
 
-        if (
-          error.message.includes(
-            "Failed to fetch"
-          )
-        ) {
+          "\n\n" +
 
-          status.innerText =
-            "❌ Connection error. n8n/CORS connection check karo.";
+          "n8n Executions mein workflow check karein."
+        );
 
-        } else {
-
-          status.innerText =
-            "❌ Error: " +
-            error.message;
-
-        }
 
       } finally {
 
         /*
-          Enable button again
+          =================================================
+          ENABLE BUTTON
+          =================================================
         */
 
-        button.disabled =
+        generateBtn.disabled =
           false;
 
-        button.innerText =
-          "Generate Video";
+        generateBtn.innerText =
+          "🚀 Generate Video";
 
       }
 
@@ -411,28 +580,38 @@
 
 
     /*
-      ============================================
-      ENTER KEY SUPPORT
-      ============================================
+      =====================================================
+      BUTTON CLICK
+      =====================================================
     */
 
-    document
-      .getElementById("topic")
-      .addEventListener(
-        "keydown",
-        function(event) {
+    generateBtn.addEventListener(
+      "click",
+      generateVideo
+    );
 
-          if (
-            event.key === "Enter" &&
-            event.ctrlKey
-          ) {
 
-            generateVideo();
+    /*
+      =====================================================
+      CTRL + ENTER
+      =====================================================
+    */
 
-          }
+    topicInput.addEventListener(
+      "keydown",
+      function(event) {
+
+        if (
+          event.ctrlKey &&
+          event.key === "Enter"
+        ) {
+
+          generateVideo();
 
         }
-      );
+
+      }
+    );
 
   </script>
 
