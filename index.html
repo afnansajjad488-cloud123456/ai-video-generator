@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>AI Video Generator</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0b0b0f;
+    color: white;
+}
+
+.container {
+    max-width: 800px;
+    margin: auto;
+    padding: 50px 20px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 42px;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #aaa;
+    margin-bottom: 40px;
+}
+
+.card {
+    background: #15151c;
+    padding: 25px;
+    border-radius: 18px;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+    font-weight: bold;
+}
+
+textarea {
+    width: 100%;
+    min-height: 120px;
+    resize: vertical;
+    background: #0e0e14;
+    color: white;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    margin-top: 20px;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: #6c5ce7;
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.status {
+    margin-top: 20px;
+    text-align: center;
+    color: #aaa;
+}
+
+.video-box {
+    margin-top: 30px;
+    display: none;
+}
+
+video {
+    width: 100%;
+    border-radius: 15px;
+}
+
+.download {
+    display: block;
+    margin-top: 15px;
+    padding: 14px;
+    text-align: center;
+    background: #22222c;
+    color: white;
+    text-decoration: none;
+    border-radius: 10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>AI Video Generator</h1>
+
+    <div class="subtitle">
+        Generate a complete AI Shorts video with one click.
+    </div>
+
+    <div class="card">
+
+        <label for="topic">
+            Video Topic
+        </label>
+
+        <textarea
+            id="topic"
+            placeholder="Example: Duniya ka sab se ajeeb janwar"
+        ></textarea>
+
+        <button id="generateBtn" onclick="generateVideo()">
+            Generate Video
+        </button>
+
+        <div class="status" id="status">
+            Ready
+        </div>
+
+        <div class="video-box" id="videoBox">
+
+            <video
+                id="video"
+                controls
+            ></video>
+
+            <a
+                id="download"
+                class="download"
+                target="_blank"
+                download
+            >
+                Open / Download Video
+            </a>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+
+const WEBHOOK_URL =
+"https://afnan804302.app.n8n.cloud/webhook/generate-short";
+
+async function generateVideo() {
+
+    const topic =
+        document.getElementById("topic").value.trim();
+
+    const button =
+        document.getElementById("generateBtn");
+
+    const status =
+        document.getElementById("status");
+
+    const videoBox =
+        document.getElementById("videoBox");
+
+    const video =
+        document.getElementById("video");
+
+    const download =
+        document.getElementById("download");
+
+
+    if (!topic) {
+
+        status.innerText =
+            "Please enter a topic.";
+
+        return;
+    }
+
+
+    button.disabled = true;
+
+    videoBox.style.display = "none";
+
+    status.innerText =
+        "Generating video... Please wait.";
+
+
+    try {
+
+        const response = await fetch(
+            WEBHOOK_URL,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    topic: topic
+                })
+            }
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Server error: " + response.status
+            );
+        }
+
+
+        const result =
+            await response.json();
+
+
+        if (!result.video_url) {
+
+            throw new Error(
+                "Video URL nahi mila."
+            );
+        }
+
+
+        video.src =
+            result.video_url;
+
+        download.href =
+            result.video_url;
+
+
+        videoBox.style.display =
+            "block";
+
+        status.innerText =
+            "Video successfully generated!";
+
+
+    } catch (error) {
+
+        console.error(error);
+
+        status.innerText =
+            "Error: " + error.message;
+
+    } finally {
+
+        button.disabled = false;
+
+    }
+
+}
+
+</script>
+
+</body>
+</html>
