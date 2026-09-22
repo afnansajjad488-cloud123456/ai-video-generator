@@ -193,7 +193,7 @@
 
       <div class="info">
         🤖 <strong>Automatic AI Mode:</strong>
-        Topic box khali chhor dein. Gemini khud interesting topic generate karega,
+        Topic box khali chhor dein. AI khud interesting topic generate karega,
         phir script, scenes, visuals, voice aur final video automatically create hogi.
       </div>
 
@@ -230,7 +230,8 @@ Duniya ka sab se ajeeb janwar">
           <a
             id="openVideo"
             href="#"
-            target="_blank">
+            target="_blank"
+            rel="noopener">
             🔗 Open Video
           </a>
 
@@ -238,6 +239,7 @@ Duniya ka sab se ajeeb janwar">
             id="downloadVideo"
             href="#"
             target="_blank"
+            rel="noopener"
             download>
             ⬇️ Download Video
           </a>
@@ -259,12 +261,12 @@ Duniya ka sab se ajeeb janwar">
 
     /*
     =====================================================
-    n8n WEBHOOK
+    n8n PRODUCTION WEBHOOK
     =====================================================
     */
 
     const WEBHOOK_URL =
-      "https://afnan804302.app.n8n.cloud/webhook-test/generate-short";
+      "https://afnan804302.app.n8n.cloud/webhook/youtube-generate-short";
 
 
     /*
@@ -297,7 +299,7 @@ Duniya ka sab se ajeeb janwar">
 
     /*
     =====================================================
-    STATUS FUNCTION
+    STATUS
     =====================================================
     */
 
@@ -326,8 +328,7 @@ Duniya ka sab se ajeeb janwar">
       Reset previous video
       */
 
-      videoContainer.style.display =
-        "none";
+      videoContainer.style.display = "none";
 
       videoPlayer.removeAttribute("src");
 
@@ -345,21 +346,21 @@ Duniya ka sab se ajeeb janwar">
 
 
       /*
-      Show progress
+      Progress message
       */
 
       showStatus(
         "🤖 AI video generation started...\n\n" +
 
-        "1️⃣ Gemini topic generate kar raha hai...\n" +
+        "1️⃣ Topic process ho raha hai...\n" +
 
         "2️⃣ Urdu script aur scenes ban rahe hain...\n" +
 
-        "3️⃣ Images prepare ho rahi hain...\n" +
+        "3️⃣ Visuals prepare ho rahe hain...\n" +
 
         "4️⃣ AI voice generate ho rahi hai...\n" +
 
-        "5️⃣ Video assemble ho rahi hai...\n\n" +
+        "5️⃣ Final video assemble ho rahi hai...\n\n" +
 
         "⏳ Please wait..."
       );
@@ -369,17 +370,8 @@ Duniya ka sab se ajeeb janwar">
 
         /*
         =================================================
-        REQUEST BODY
+        REQUEST DATA
         =================================================
-
-        prompt:
-        User ka topic agar diya gaya hai.
-
-        Agar topic empty hai to:
-        "Create my video"
-
-        user:
-        Website se request aa rahi hai.
         */
 
         const requestBody = {
@@ -399,14 +391,14 @@ Duniya ka sab se ajeeb janwar">
 
 
         console.log(
-          "Sending to n8n:",
+          "Sending request to n8n:",
           requestBody
         );
 
 
         /*
         =================================================
-        SEND REQUEST TO n8n
+        SEND TO n8n
         =================================================
         */
 
@@ -428,7 +420,7 @@ Duniya ka sab se ajeeb janwar">
 
         /*
         =================================================
-        CHECK HTTP RESPONSE
+        HTTP ERROR
         =================================================
         */
 
@@ -445,7 +437,7 @@ Duniya ka sab se ajeeb janwar">
 
         /*
         =================================================
-        READ RESPONSE
+        READ n8n RESPONSE
         =================================================
         */
 
@@ -474,15 +466,15 @@ Duniya ka sab se ajeeb janwar">
 
         /*
         =================================================
-        VIDEO URL CHECK
+        VIDEO URL NOT FOUND
         =================================================
         */
 
         if (!videoUrl) {
 
           throw new Error(
-            "n8n response mein video_url nahi mila.\n\n" +
-            "Received response:\n" +
+            "n8n response mein video URL nahi mila.\n\n" +
+            "Received response:\n\n" +
             JSON.stringify(
               data,
               null,
@@ -504,14 +496,13 @@ Duniya ka sab se ajeeb janwar">
 
         videoPlayer.load();
 
-
         videoContainer.style.display =
           "block";
 
 
         /*
         =================================================
-        OPEN / DOWNLOAD LINKS
+        LINKS
         =================================================
         */
 
@@ -546,12 +537,6 @@ Duniya ka sab se ajeeb janwar">
 
       } catch (error) {
 
-        /*
-        =================================================
-        ERROR
-        =================================================
-        */
-
         console.error(
           "Generation error:",
           error
@@ -567,16 +552,13 @@ Duniya ka sab se ajeeb janwar">
 
           "\n\n" +
 
-          "n8n Executions mein workflow check karein."
+          "n8n ke Executions section mein workflow check karein."
         );
-
 
       } finally {
 
         /*
-        =================================================
-        ENABLE BUTTON
-        =================================================
+        Enable button
         */
 
         generateBtn.disabled =
@@ -628,36 +610,4 @@ Duniya ka sab se ajeeb janwar">
 
 </body>
 </html>
-```
 
-**Important:** Maine aapka exact **`/webhook-test/generate-short`** URL rakha hai.
-
-Is code se n8n ko request is format mein milegi:
-
-```json
-{
-  "prompt": "Duniya ka sab se ajeeb janwar",
-  "user": "website",
-  "topic": "Duniya ka sab se ajeeb janwar"
-}
-```
-
-Agar topic box **empty** ho:
-
-```json
-{
-  "prompt": "Create my video",
-  "user": "website",
-  "topic": ""
-}
-```
-
-Aur n8n Webhook ke baad jo final response website ko bhejega, usmein ideally `video_url` hona chahiye, jaise:
-
-```json
-{
-  "video_url": "https://example.com/my-video.mp4"
-}
-```
-
-**Ek important baat:** `/webhook-test/` URL n8n ke **test mode** ke liye hota hai. Website ko permanently chalana ho to workflow **Active** karke `/webhook/generate-short` wala production URL use karna hoga.
