@@ -2,59 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>AI Urdu Shorts Generator</title>
 
   <style>
     * {
       box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      margin: 0;
-      min-height: 100vh;
       font-family: Arial, Helvetica, sans-serif;
-      background: #0f172a;
-      color: #ffffff;
+      background: linear-gradient(135deg, #0f172a, #1e293b);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
     }
 
     .container {
       width: 100%;
-      max-width: 850px;
-      margin: 0 auto;
-      padding: 40px 20px;
-    }
-
-    .card {
-      background: #1e293b;
+      max-width: 650px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 20px;
       padding: 30px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
     }
 
     h1 {
-      margin: 0;
       text-align: center;
       font-size: 32px;
+      margin-bottom: 10px;
     }
 
     .subtitle {
-      margin-top: 10px;
-      margin-bottom: 25px;
       text-align: center;
       color: #cbd5e1;
-      line-height: 1.5;
+      margin-bottom: 25px;
+      line-height: 1.6;
     }
 
     .info {
-      background: #172554;
-      color: #bfdbfe;
-      padding: 15px;
+      background: rgba(59,130,246,0.12);
+      border: 1px solid rgba(59,130,246,0.3);
       border-radius: 12px;
-      margin-bottom: 25px;
-      line-height: 1.6;
+      padding: 15px;
+      margin-bottom: 20px;
+      color: #dbeafe;
       font-size: 14px;
+      line-height: 1.6;
     }
 
     label {
@@ -66,15 +71,19 @@
     textarea {
       width: 100%;
       min-height: 120px;
-      padding: 15px;
-      border: none;
-      outline: none;
       resize: vertical;
+      border: 1px solid #475569;
       border-radius: 12px;
-      background: #334155;
-      color: #ffffff;
+      background: #020617;
+      color: white;
+      padding: 15px;
       font-size: 16px;
-      font-family: Arial, Helvetica, sans-serif;
+      outline: none;
+      margin-bottom: 15px;
+    }
+
+    textarea:focus {
+      border-color: #3b82f6;
     }
 
     textarea::placeholder {
@@ -83,69 +92,84 @@
 
     button {
       width: 100%;
-      margin-top: 18px;
-      padding: 16px;
       border: none;
       border-radius: 12px;
-      background: #2563eb;
-      color: #ffffff;
+      padding: 16px;
       font-size: 18px;
       font-weight: bold;
       cursor: pointer;
+      background: #2563eb;
+      color: white;
+      transition: 0.2s;
     }
 
     button:hover {
       background: #1d4ed8;
+      transform: translateY(-1px);
     }
 
     button:disabled {
       background: #475569;
       cursor: not-allowed;
+      transform: none;
     }
 
-    #status {
+    .status {
       display: none;
       margin-top: 20px;
-      padding: 16px;
+      padding: 15px;
       border-radius: 12px;
-      background: #334155;
-      color: #e2e8f0;
       line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-word;
     }
 
-    #videoContainer {
-      display: none;
-      margin-top: 30px;
-    }
-
-    #videoContainer h2 {
-      margin-bottom: 15px;
-    }
-
-    video {
+    .loading {
       display: block;
+      background: rgba(234,179,8,0.12);
+      border: 1px solid rgba(234,179,8,0.3);
+      color: #fde68a;
+    }
+
+    .success {
+      display: block;
+      background: rgba(34,197,94,0.12);
+      border: 1px solid rgba(34,197,94,0.3);
+      color: #bbf7d0;
+    }
+
+    .error {
+      display: block;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.3);
+      color: #fecaca;
+    }
+
+    .video-box {
+      display: none;
+      margin-top: 25px;
+    }
+
+    .video-box video {
       width: 100%;
-      max-height: 600px;
-      border-radius: 15px;
-      background: #000000;
+      border-radius: 14px;
+      background: black;
     }
 
     .links {
       display: flex;
-      gap: 12px;
+      gap: 10px;
       margin-top: 15px;
     }
 
     .links a {
       flex: 1;
-      padding: 13px;
-      border-radius: 10px;
-      background: #334155;
-      color: #ffffff;
       text-align: center;
       text-decoration: none;
+      background: #334155;
+      color: white;
+      padding: 12px;
+      border-radius: 10px;
       font-weight: bold;
     }
 
@@ -154,28 +178,10 @@
     }
 
     .footer {
-      margin-top: 25px;
       text-align: center;
-      color: #64748b;
+      margin-top: 25px;
+      color: #94a3b8;
       font-size: 13px;
-    }
-
-    @media (max-width: 600px) {
-      .container {
-        padding: 20px 12px;
-      }
-
-      .card {
-        padding: 20px;
-      }
-
-      h1 {
-        font-size: 26px;
-      }
-
-      .links {
-        flex-direction: column;
-      }
     }
   </style>
 </head>
@@ -184,97 +190,87 @@
 
   <div class="container">
 
-    <div class="card">
+    <h1>AI Urdu Shorts Generator</h1>
 
-      <h1>🎬 AI Urdu Shorts Generator</h1>
+    <p class="subtitle">
+      One click mein Urdu YouTube Shorts generate karein
+      using AI topic, script, scenes, visuals aur voice-over.
+    </p>
 
-      <div class="subtitle">
-        Ek click mein complete Urdu YouTube Shorts video generate karein.
-      </div>
+    <div class="info">
+      <strong>How it works:</strong><br>
+      Topic enter karein ya blank chhor dein.
+      Generate Video par click karein.
+      Website automatically n8n workflow ko trigger karegi.
+    </div>
 
-      <div class="info">
-        🤖 <strong>Automatic AI Mode:</strong><br>
-        Topic box khali chhor dein. Gemini khud interesting topic generate
-        karega, phir script, scenes, visuals, ElevenLabs voice aur final video
-        automatically create hogi.
-      </div>
+    <label for="topic">
+      Video Topic
+    </label>
 
-      <label for="topic">
-        Topic — Optional
-      </label>
+    <textarea
+      id="topic"
+      placeholder="Example: Samandar ke andar sab se gehri jagah kya hai?
 
-      <textarea
-        id="topic"
-        placeholder="Topic khali chhor dein aur AI ko topic choose karne dein...
+Agar topic blank chhor dein to AI khud topic generate karega."
+    ></textarea>
 
-Ya apna topic likhein:
-Duniya ka sab se ajeeb janwar">
-      </textarea>
+    <button id="generateBtn">
+      🎬 Generate Video
+    </button>
 
-      <button id="generateBtn">
-        🚀 Generate Video
-      </button>
+    <div id="status" class="status"></div>
 
-      <div id="status"></div>
+    <div id="videoBox" class="video-box">
 
-      <div id="videoContainer">
+      <video
+        id="videoPlayer"
+        controls
+        playsinline
+      ></video>
 
-        <h2>🎥 Your Generated Video</h2>
+      <div class="links">
 
-        <video
-          id="videoPlayer"
-          controls
-          playsinline>
-        </video>
+        <a
+          id="openVideo"
+          href="#"
+          target="_blank"
+        >
+          ▶ Open Video
+        </a>
 
-        <div class="links">
+        <a
+          id="downloadVideo"
+          href="#"
+          target="_blank"
+          download
+        >
+          ⬇ Download
+        </a>
 
-          <a
-            id="openVideo"
-            href="#"
-            target="_blank"
-            rel="noopener">
-            🔗 Open Video
-          </a>
-
-          <a
-            id="downloadVideo"
-            href="#"
-            target="_blank"
-            rel="noopener">
-            ⬇️ Download Video
-          </a>
-
-        </div>
-
-      </div>
-
-      <div class="footer">
-        Powered by n8n + Gemini + ElevenLabs
       </div>
 
     </div>
 
-  </div>
+    <div class="footer">
+      Powered by n8n + Gemini + ElevenLabs
+    </div>
 
+  </div>
 
   <script>
 
-    /*
-    =====================================================
-    PRODUCTION n8n WEBHOOK
-    =====================================================
-    */
+    // =====================================================
+    // N8N PRODUCTION WEBHOOK
+    // =====================================================
 
     const WEBHOOK_URL =
       "https://afnan804302.app.n8n.cloud/webhook/generate-short";
 
 
-    /*
-    =====================================================
-    GET HTML ELEMENTS
-    =====================================================
-    */
+    // =====================================================
+    // ELEMENTS
+    // =====================================================
 
     const topicInput =
       document.getElementById("topic");
@@ -285,8 +281,8 @@ Duniya ka sab se ajeeb janwar">
     const statusBox =
       document.getElementById("status");
 
-    const videoContainer =
-      document.getElementById("videoContainer");
+    const videoBox =
+      document.getElementById("videoBox");
 
     const videoPlayer =
       document.getElementById("videoPlayer");
@@ -298,328 +294,236 @@ Duniya ka sab se ajeeb janwar">
       document.getElementById("downloadVideo");
 
 
-    /*
-    =====================================================
-    SHOW STATUS
-    =====================================================
-    */
+    // =====================================================
+    // STATUS FUNCTION
+    // =====================================================
 
-    function showStatus(message) {
+    function showStatus(message, type) {
 
-      statusBox.style.display = "block";
+      statusBox.className = "status " + type;
 
-      statusBox.innerText = message;
+      statusBox.textContent = message;
 
     }
 
 
-    /*
-    =====================================================
-    HIDE VIDEO
-    =====================================================
-    */
+    // =====================================================
+    // FIND VIDEO URL
+    // =====================================================
 
-    function hideVideo() {
-
-      videoContainer.style.display = "none";
-
-      videoPlayer.pause();
-
-      videoPlayer.removeAttribute("src");
-
-      videoPlayer.load();
-
-      openVideo.href = "#";
-
-      downloadVideo.href = "#";
-
-    }
-
-
-    /*
-    =====================================================
-    EXTRACT VIDEO URL
-    =====================================================
-    */
-
-    function getVideoUrl(data) {
+    function findVideoUrl(data) {
 
       if (!data) {
         return null;
       }
 
-      /*
-      Direct response:
-      {
-        "video_url": "https://..."
-      }
-      */
 
-      if (typeof data.video_url === "string") {
-        return data.video_url;
-      }
+      // Direct object
 
-      /*
-      Alternative response names
-      */
+      if (typeof data === "object") {
 
-      if (typeof data.final_video_url === "string") {
-        return data.final_video_url;
-      }
+        const possibleKeys = [
+          "video_url",
+          "final_video_url",
+          "secure_url",
+          "url"
+        ];
 
-      if (typeof data.secure_url === "string") {
-        return data.secure_url;
-      }
+        for (const key of possibleKeys) {
 
-      if (typeof data.url === "string") {
-        return data.url;
-      }
+          if (
+            typeof data[key] === "string" &&
+            data[key].startsWith("http")
+          ) {
 
-      /*
-      If n8n returns an array
-      */
+            return data[key];
 
-      if (Array.isArray(data) && data.length > 0) {
+          }
 
-        const first =
-          data[0];
+        }
 
-        return getVideoUrl(first);
 
-      }
+        // Nested objects
 
-      /*
-      If n8n wraps data inside another object
-      */
+        for (const key of Object.keys(data)) {
 
-      if (data.data) {
+          const nestedUrl =
+            findVideoUrl(data[key]);
 
-        const nested =
-          getVideoUrl(data.data);
+          if (nestedUrl) {
+            return nestedUrl;
+          }
 
-        if (nested) {
-          return nested;
         }
 
       }
+
+
+      // Array response
+
+      if (Array.isArray(data)) {
+
+        for (const item of data) {
+
+          const nestedUrl =
+            findVideoUrl(item);
+
+          if (nestedUrl) {
+            return nestedUrl;
+          }
+
+        }
+
+      }
+
 
       return null;
 
     }
 
 
-    /*
-    =====================================================
-    GENERATE VIDEO
-    =====================================================
-    */
+    // =====================================================
+    // GENERATE VIDEO
+    // =====================================================
 
     async function generateVideo() {
 
-      /*
-      Prevent duplicate clicks
-      */
+      // Disable button
 
-      if (generateBtn.disabled) {
-        return;
-      }
+      generateBtn.disabled = true;
+
+      generateBtn.textContent =
+        "⏳ Generating Video...";
 
 
-      /*
-      Get topic
-      */
+      // Hide previous video
+
+      videoBox.style.display = "none";
+
+      videoPlayer.removeAttribute("src");
+
+      openVideo.href = "#";
+
+      downloadVideo.href = "#";
+
+
+      showStatus(
+        "⏳ Request n8n ko bheji ja rahi hai...\n\n" +
+        "Video generation mein kuch time lag sakta hai. " +
+        "Is page ko close na karein.",
+        "loading"
+      );
+
+
+      // Get topic
 
       const topic =
         topicInput.value.trim();
 
 
-      /*
-      Hide old video
-      */
+      // =================================================
+      // REQUEST BODY
+      // =================================================
 
-      hideVideo();
-
-
-      /*
-      Disable button
-      */
-
-      generateBtn.disabled =
-        true;
-
-      generateBtn.innerText =
-        "⏳ Generating Video...";
+      let requestBody = {};
 
 
-      /*
-      Show progress
-      */
+      if (topic) {
 
-      showStatus(
-        "🚀 Video generation started...\n\n" +
+        requestBody = {
+          topic: topic
+        };
 
-        "🤖 AI workflow start ho raha hai...\n" +
-
-        "1️⃣ Topic generate ho raha hai...\n" +
-
-        "2️⃣ Urdu script aur scenes ban rahe hain...\n" +
-
-        "3️⃣ Visuals prepare ho rahe hain...\n" +
-
-        "4️⃣ ElevenLabs voice generate kar raha hai...\n" +
-
-        "5️⃣ Final video create ho rahi hai...\n\n" +
-
-        "⏳ Please wait..."
-      );
+      }
 
 
       try {
 
-        /*
-        =================================================
-        REQUEST BODY
-        =================================================
-        */
+        // =================================================
+        // SEND REQUEST TO N8N
+        // =================================================
 
-        let requestBody = {};
+        const response = await fetch(
+          WEBHOOK_URL,
+          {
+            method: "POST",
 
-        /*
-        Topic diya gaya ho to n8n ko bhejo
-        */
+            headers: {
+              "Content-Type": "application/json"
+            },
 
-        if (topic !== "") {
-
-          requestBody = {
-            topic: topic
-          };
-
-        }
-
-
-        /*
-        =================================================
-        SEND REQUEST TO n8n
-        =================================================
-        */
-
-        const response =
-          await fetch(
-            WEBHOOK_URL,
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type": "application/json"
-              },
-
-              body:
-                JSON.stringify(requestBody)
-            }
-          );
-
-
-        /*
-        =================================================
-        HTTP ERROR
-        =================================================
-        */
-
-        if (!response.ok) {
-
-          let serverMessage = "";
-
-          try {
-
-            serverMessage =
-              await response.text();
-
-          } catch (e) {
-
-            serverMessage = "";
-
+            body: JSON.stringify(
+              requestBody
+            )
           }
-
-          throw new Error(
-            "n8n HTTP " +
-            response.status +
-            "\n\n" +
-            serverMessage
-          );
-
-        }
-
-
-        /*
-        =================================================
-        READ n8n RESPONSE
-        =================================================
-        */
-
-        const data =
-          await response.json();
-
-
-        console.log(
-          "n8n response:",
-          data
         );
 
 
-        /*
-        =================================================
-        FIND VIDEO URL
-        =================================================
-        */
+        // =================================================
+        // READ RESPONSE
+        // =================================================
+
+        const responseText =
+          await response.text();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            "n8n HTTP Error " +
+            response.status +
+            "\n\n" +
+            responseText
+          );
+
+        }
+
+
+        // =================================================
+        // PARSE JSON
+        // =================================================
+
+        let data;
+
+        try {
+
+          data =
+            JSON.parse(responseText);
+
+        } catch (jsonError) {
+
+          // Sometimes n8n can return plain text
+
+          data = responseText;
+
+        }
+
+
+        // =================================================
+        // FIND VIDEO URL
+        // =================================================
 
         const videoUrl =
-          getVideoUrl(data);
+          findVideoUrl(data);
 
-
-        /*
-        =================================================
-        NO VIDEO URL
-        =================================================
-        */
 
         if (!videoUrl) {
 
           throw new Error(
-            "n8n response mein video_url nahi mila.\n\n" +
-            "Received response:\n" +
-            JSON.stringify(
-              data,
-              null,
-              2
-            )
+            "n8n se response mila, lekin video URL nahi mila.\n\n" +
+            "n8n Response:\n" +
+            responseText
           );
 
         }
 
 
-        /*
-        =================================================
-        SET VIDEO
-        =================================================
-        */
+        // =================================================
+        // SHOW VIDEO
+        // =================================================
 
         videoPlayer.src =
           videoUrl;
-
-        videoPlayer.load();
-
-
-        /*
-        SHOW VIDEO
-        */
-
-        videoContainer.style.display =
-          "block";
-
-
-        /*
-        LINKS
-        */
 
         openVideo.href =
           videoUrl;
@@ -627,34 +531,18 @@ Duniya ka sab se ajeeb janwar">
         downloadVideo.href =
           videoUrl;
 
+        videoBox.style.display =
+          "block";
 
-        /*
-        SUCCESS
-        */
 
         showStatus(
-          "✅ Video successfully generated!\n\n" +
-          "Neeche video player mein aapki video ready hai."
+          "✅ Video successfully generate ho gayi!\n\n" +
+          "Neeche video play kar sakte hain.",
+          "success"
         );
 
 
-        /*
-        Scroll to video
-        */
-
-        videoContainer.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
-
-
       } catch (error) {
-
-        /*
-        =================================================
-        ERROR
-        =================================================
-        */
 
         console.error(
           "Video generation error:",
@@ -662,39 +550,70 @@ Duniya ka sab se ajeeb janwar">
         );
 
 
+        // =================================================
+        // ERROR MESSAGE
+        // =================================================
+
+        let errorMessage =
+          error.message ||
+          "Unknown error";
+
+
+        if (
+          error.name === "TypeError" &&
+          error.message === "Failed to fetch"
+        ) {
+
+          errorMessage =
+            "Failed to fetch.\n\n" +
+
+            "Possible reasons:\n" +
+
+            "1. n8n webhook reachable nahi hai.\n" +
+
+            "2. n8n workflow Active nahi hai.\n" +
+
+            "3. Webhook URL incorrect hai.\n" +
+
+            "4. Browser CORS request block kar raha hai.\n" +
+
+            "5. n8n workflow request receive karke response nahi de raha.\n\n" +
+
+            "n8n → Executions mein check karein ke new execution bani ya nahi.";
+
+        }
+
+
         showStatus(
           "❌ Video generate nahi hui.\n\n" +
           "Error:\n" +
-          error.message +
+          errorMessage +
           "\n\n" +
-          "n8n → Executions mein latest execution check karein."
+          "n8n ke Executions section mein workflow check karein.",
+          "error"
         );
 
 
       } finally {
 
-        /*
-        =================================================
-        ENABLE BUTTON
-        =================================================
-        */
+        // =================================================
+        // ENABLE BUTTON AGAIN
+        // =================================================
 
         generateBtn.disabled =
           false;
 
-        generateBtn.innerText =
-          "🚀 Generate Video";
+        generateBtn.textContent =
+          "🎬 Generate Video";
 
       }
 
     }
 
 
-    /*
-    =====================================================
-    BUTTON CLICK
-    =====================================================
-    */
+    // =====================================================
+    // BUTTON CLICK
+    // =====================================================
 
     generateBtn.addEventListener(
       "click",
@@ -702,11 +621,9 @@ Duniya ka sab se ajeeb janwar">
     );
 
 
-    /*
-    =====================================================
-    CTRL + ENTER
-    =====================================================
-    */
+    // =====================================================
+    // CTRL + ENTER
+    // =====================================================
 
     topicInput.addEventListener(
       "keydown",
