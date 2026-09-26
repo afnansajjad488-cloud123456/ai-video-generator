@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: ai-video-urdu-tts
+    runtime: docker
+    plan: free
+    rootDir: tts
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: TTS_API_KEY
+        sync: false
