@@ -14,7 +14,7 @@ RUN wget -O /app/models/ur_PK-aegis_female-medium.onnx \
     https://huggingface.co/mahwizzzz/piper-voice-ur-aegis-female/resolve/main/ur_PK-aegis_female-medium.onnx
 
 RUN wget -O /app/models/ur_PK-aegis_female-medium.onnx.json \
-    https://huggingface.co/mahwizzzz/piper-voice-ur-aegis_female/resolve/main/ur_PK-aegis_female-medium.onnx.json
+    https://huggingface.co/mahwizzzz/piper-voice-ur-aegis-female/resolve/main/ur_PK-aegis_female-medium.onnx.json
 
 COPY tts/app.py /app/app.py
 
