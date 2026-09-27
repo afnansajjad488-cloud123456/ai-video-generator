@@ -602,6 +602,19 @@
       font-weight: 700;
       margin: -8px 0 18px;
     }
+  
+    /* 3-step app flow */
+    .flow-page { display: none; }
+    .flow-page.active { display: block; }
+    #landingPage { display: block; }
+    #creatorCard { display: none; }
+    .flow-nav { display:flex; gap:8px; margin:0 0 14px; }
+    .flow-pill { flex:1; text-align:center; padding:9px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.08); background:rgba(255,255,255,.03); color:#70809f; font-size:11px; font-weight:900; }
+    .flow-pill.active { color:#fff; background:rgba(79,140,255,.14); border-color:rgba(79,140,255,.35); }
+    .verify-box { margin-top:12px; padding:13px; border-radius:12px; background:rgba(79,140,255,.08); border:1px solid rgba(79,140,255,.22); color:#bfd2f7; font-size:12px; line-height:1.6; }
+    .verify-box input { width:100%; margin-top:9px; border:1px solid #263451; background:#050916; color:white; padding:12px; border-radius:10px; outline:none; letter-spacing:.25em; text-align:center; font-weight:900; }
+    .back-flow { margin-top:10px; width:100%; border:1px solid var(--line); background:rgba(255,255,255,.04); color:#d9e2f3; padding:11px; border-radius:11px; cursor:pointer; font-weight:800; }
+    .creator-only-note { margin-bottom:15px; padding:12px 14px; border-radius:12px; background:rgba(53,208,127,.08); border:1px solid rgba(53,208,127,.18); color:#b9f7d5; font-size:12px; }
   </style>
 </head>
 
@@ -624,7 +637,8 @@
       </div>
     </header>
 
-    <section class="hero">
+    <section id="landingPage" class="flow-page active">
+    <div class="hero">
       <div class="hero-video-label">🎬 AI VIDEO DEMO</div>
       <video
         class="hero-video"
@@ -665,10 +679,19 @@
           <span>✓ n8n + Gemini + Cloudinary</span>
         </div>
       </div>
+    </div>
     </section>
 
+    <div id="flowNav" class="flow-nav" style="display:none;">
+      <div id="flow1" class="flow-pill active">01 Demo</div>
+      <div id="flow2" class="flow-pill">02 Account + Verification</div>
+      <div id="flow3" class="flow-pill">03 Generate Video</div>
+    </div>
+
+    <div id="creatorPage" class="flow-page">
     <div class="main-grid">
       <section class="card" id="creatorCard">
+        <div class="creator-only-note">🔒 Account verified: AI Short Generator unlocked.</div>
         <h2>Create your next Short</h2>
         <p class="card-desc">
           Video banane se pehle account login/sign up karein. Topic optional hai —
@@ -737,6 +760,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         </div>
       </aside>
     </div>
+    </div>
 
     <div id="previewModal" class="preview-modal">
       <div class="preview-panel">
@@ -784,13 +808,17 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           <input id="authConfirm" type="password" placeholder="Repeat password" autocomplete="new-password">
         </div>
 
+        <div id="verifyStep" class="verify-box" style="display:none;">
+          <strong>📩 Email verification</strong><br>
+          Verification code enter karein. Real email delivery ke liye backend email service connect karni hogi.
+          <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+        </div>
         <button id="authSubmit" class="auth-submit" type="submit">Login</button>
         <div id="authMessage" class="auth-message"></div>
       </form>
 
       <div class="auth-note">
-        Note: abhi ye account gate browser ke local storage par based hai. Real
-        multi-device secure accounts ke liye Firebase/Supabase jaisa backend connect karna hoga.
+        Note: abhi account data browser local storage par based hai. Email verification UI included hai; real email OTP delivery aur secure multi-device accounts ke liye backend (Firebase/Supabase/your API) connect karna hoga.
       </div>
     </div>
   </div>
@@ -836,6 +864,16 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     const authConfirm = document.getElementById("authConfirm");
 
     let authMode = "login";
+    let pendingVerification = null;
+
+    const landingPage = document.getElementById("landingPage");
+    const creatorPage = document.getElementById("creatorPage");
+    const flowNav = document.getElementById("flowNav");
+    const flow1 = document.getElementById("flow1");
+    const flow2 = document.getElementById("flow2");
+    const flow3 = document.getElementById("flow3");
+    const verifyStep = document.getElementById("verifyStep");
+    const verifyCode = document.getElementById("verifyCode");
 
     function showStatus(message, type) {
       statusBox.className = "status " + type;
@@ -880,6 +918,10 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       authBackdrop.classList.remove("show");
       authMessage.textContent = "";
       authForm.reset();
+      verifyStep.style.display = "none";
+      verifyCode.value = "";
+      pendingVerification = null;
+      if (getCurrentUser()) showCreator();
     }
 
     function setAuthMode(mode) {
@@ -900,6 +942,34 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       authMessage.textContent = "";
     }
 
+    function showLanding() {
+      landingPage.classList.add("active");
+      creatorPage.classList.remove("active");
+      flowNav.style.display = "none";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function showCreator() {
+      landingPage.classList.remove("active");
+      creatorPage.classList.add("active");
+      flowNav.style.display = "flex";
+      flow1.classList.remove("active");
+      flow2.classList.remove("active");
+      flow3.classList.add("active");
+      document.getElementById("creatorCard").style.display = "block";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function showAuthPage(mode = "login") {
+      landingPage.classList.remove("active");
+      creatorPage.classList.remove("active");
+      flowNav.style.display = "flex";
+      flow1.classList.remove("active");
+      flow2.classList.add("active");
+      flow3.classList.remove("active");
+      openAuth(mode);
+    }
+
     function updateAccountUI() {
       const user = getCurrentUser();
 
@@ -909,17 +979,19 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         loginTopBtn.style.display = "none";
         logoutBtn.style.display = "block";
         generateBtn.textContent = "🎬 Generate Video";
+        document.getElementById("creatorCard").style.display = "block";
       } else {
         userChip.style.display = "none";
         loginTopBtn.style.display = "block";
         logoutBtn.style.display = "none";
         generateBtn.textContent = "🔐 Login / Sign up to Generate";
+        document.getElementById("creatorCard").style.display = "none";
       }
     }
 
     function requireLogin() {
       if (!getCurrentUser()) {
-        openAuth("login");
+        showAuthPage("login");
         return false;
       }
       return true;
@@ -1100,7 +1172,14 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
       } finally {
         generateBtn.disabled = false;
-        updateAccountUI();
+        flow1.addEventListener("click", () => showLanding());
+    flow3.addEventListener("click", () => {
+      if (getCurrentUser()) showCreator();
+      else showAuthPage("login");
+    });
+
+    updateAccountUI();
+
       }
     }
 
@@ -1138,22 +1217,50 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         }
 
         const passwordHash = await hashPassword(password);
-        const user = { name, email, passwordHash };
+        const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+        pendingVerification = {
+          name,
+          email,
+          passwordHash,
+          code: verificationCode
+        };
 
-        users.push(user);
+        verifyStep.style.display = "block";
+        authSubmit.textContent = "Verify & Create Account";
+        authMessage.textContent = "Verification step ready. Demo mode mein code neeche console mein available hai.";
+        console.info("ShortForge AI demo verification code:", verificationCode);
+        verifyCode.focus();
+        return;
+      }
+
+      if (pendingVerification) {
+        if (verifyCode.value.trim() !== pendingVerification.code) {
+          authMessage.textContent = "Verification code incorrect hai.";
+          return;
+        }
+
+        const verifiedUser = {
+          name: pendingVerification.name,
+          email: pendingVerification.email,
+          passwordHash: pendingVerification.passwordHash,
+          verified: true
+        };
+
+        users.push(verifiedUser);
         localStorage.setItem("aiUrduShortsUsers", JSON.stringify(users));
-        setCurrentUser({ name, email });
-
+        setCurrentUser({ name: verifiedUser.name, email: verifiedUser.email, verified: true });
+        pendingVerification = null;
+        verifyStep.style.display = "none";
         closeAuth();
         updateAccountUI();
-
-        showStatus("✅ Account create ho gaya. Ab aap video generate kar sakte hain.", "success");
+        showCreator();
+        showStatus("✅ Email verification complete. Ab AI video generator unlocked hai.", "success");
         return;
       }
 
       const passwordHash = await hashPassword(password);
       const user = users.find(
-        item => item.email === email && item.passwordHash === passwordHash
+        item => item.email === email && item.passwordHash === passwordHash && item.verified === true
       );
 
       if (!user) {
@@ -1164,17 +1271,19 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       setCurrentUser({ name: user.name, email: user.email });
       closeAuth();
       updateAccountUI();
-      showStatus("✅ Login successful. Ab apna topic enter karke video generate karein.", "success");
+      showCreator();
+      showStatus("✅ Login successful. AI video generator unlock ho gaya.", "success");
     });
 
     loginTab.addEventListener("click", () => setAuthMode("login"));
     signupTab.addEventListener("click", () => setAuthMode("signup"));
 
-    loginTopBtn.addEventListener("click", () => openAuth("login"));
+    loginTopBtn.addEventListener("click", () => showAuthPage("login"));
 
     logoutBtn.addEventListener("click", () => {
       localStorage.removeItem("aiUrduShortsCurrentUser");
       updateAccountUI();
+      showLanding();
       showStatus("Aap logout ho gaye hain.", "loading");
     });
 
@@ -1191,7 +1300,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           block: "start"
         });
       } else {
-        openAuth("signup");
+        showAuthPage("signup");
       }
     });
 
