@@ -537,6 +537,49 @@
       h1 { font-size: 46px; }
       .card { padding: 18px; border-radius: 18px; }
     }
+  
+    .preview-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(1,4,12,.86);
+      backdrop-filter: blur(12px);
+    }
+    .preview-modal.show { display: flex; }
+    .preview-panel {
+      width: min(900px, 100%);
+      position: relative;
+      background: #090d1b;
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 22px;
+      padding: 14px;
+      box-shadow: 0 30px 100px rgba(0,0,0,.65);
+    }
+    .preview-panel video {
+      width: 100%;
+      display: block;
+      max-height: 75vh;
+      border-radius: 15px;
+      background: #000;
+    }
+    .preview-close {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 38px;
+      height: 38px;
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 50%;
+      background: #111a31;
+      color: white;
+      cursor: pointer;
+      font-size: 22px;
+      z-index: 2;
+    }
   </style>
 </head>
 
@@ -672,6 +715,13 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       </aside>
     </div>
 
+    <div id="previewModal" class="preview-modal">
+      <div class="preview-panel">
+        <button id="previewCloseBtn" class="preview-close" aria-label="Close preview">×</button>
+        <video id="previewPlayer" controls playsinline preload="metadata"></video>
+      </div>
+    </div>
+
     <div class="footer">
       Powered by n8n + Gemini + Cloudinary
     </div>
@@ -744,6 +794,9 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     const userChip = document.getElementById("userChip");
     const heroStartBtn = document.getElementById("heroStartBtn");
     const heroWatchBtn = document.getElementById("heroWatchBtn");
+    const previewModal = document.getElementById("previewModal");
+    const previewPlayer = document.getElementById("previewPlayer");
+    const previewCloseBtn = document.getElementById("previewCloseBtn");
 
     const loginTab = document.getElementById("loginTab");
     const signupTab = document.getElementById("signupTab");
@@ -1120,9 +1173,38 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     });
 
     heroWatchBtn.addEventListener("click", function() {
-      const video = document.querySelector(".hero-video");
-      video.scrollIntoView({ behavior: "smooth", block: "center" });
-      video.play().catch(() => {});
+      const heroVideo = document.querySelector(".hero-video");
+      const source = heroVideo.querySelector("source[src$='.mp4']");
+      const previewUrl = source ? source.src : "";
+
+      if (!previewUrl) {
+        showStatus("Preview video available nahi hai.", "error");
+        return;
+      }
+
+      previewPlayer.src = previewUrl;
+      previewModal.classList.add("show");
+      previewPlayer.currentTime = 0;
+      previewPlayer.play().catch(() => {});
+    });
+
+    function closePreview() {
+      previewPlayer.pause();
+      previewPlayer.removeAttribute("src");
+      previewPlayer.load();
+      previewModal.classList.remove("show");
+    }
+
+    previewCloseBtn.addEventListener("click", closePreview);
+
+    previewModal.addEventListener("click", function(event) {
+      if (event.target === previewModal) closePreview();
+    });
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape" && previewModal.classList.contains("show")) {
+        closePreview();
+      }
     });
 
     generateBtn.addEventListener("click", generateVideo);
