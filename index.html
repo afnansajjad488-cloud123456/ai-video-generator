@@ -580,6 +580,28 @@
       font-size: 22px;
       z-index: 2;
     }
+  
+    .hero-video-label {
+      position: absolute;
+      top: 18px;
+      right: 18px;
+      z-index: 3;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(5,8,22,.72);
+      border: 1px solid rgba(255,255,255,.14);
+      color: #fff;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .08em;
+      backdrop-filter: blur(10px);
+    }
+    .demo-note {
+      color: #9fb8e8;
+      font-size: 13px;
+      font-weight: 700;
+      margin: -8px 0 18px;
+    }
   </style>
 </head>
 
@@ -603,14 +625,14 @@
     </header>
 
     <section class="hero">
+      <div class="hero-video-label">🎬 AI VIDEO DEMO</div>
       <video
         class="hero-video"
         autoplay
         muted
         loop
         playsinline
-        preload="metadata"
-        poster="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm"
+        preload="auto"
       >
         <source src="https://raw.githubusercontent.com/Mng-dev-ai/explainer-video/main/demo.mp4" type="video/mp4">
         <source src="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" type="video/mp4">
@@ -620,6 +642,7 @@
 
       <div class="hero-content">
         <div class="eyebrow"><span class="dot"></span> AI-powered Urdu Shorts studio</div>
+        <div class="demo-note">Watch how your AI Short is created before you start.</div>
 
         <h1>
           Apna idea do.<br>
