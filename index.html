@@ -311,6 +311,55 @@
       display: block;
     }
 
+    .result-info {
+      display: none;
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(255,255,255,.035);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .result-info.show { display: block; }
+
+    .result-label {
+      color: #8fa2c7;
+      font-size: 11px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      margin-bottom: 6px;
+    }
+
+    .result-topic {
+      color: #f8fbff;
+      font-size: 18px;
+      font-weight: 900;
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+
+    .result-narration {
+      color: #cbd6ea;
+      font-size: 14px;
+      line-height: 1.8;
+      white-space: pre-wrap;
+    }
+
+    .narration-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 12px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(53,208,127,.10);
+      border: 1px solid rgba(53,208,127,.22);
+      color: #aef0ca;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
     .links { display: flex; gap: 10px; margin-top: 12px; }
     .links a {
       flex: 1;
@@ -574,6 +623,18 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
             <a id="downloadVideo" href="#" target="_blank" download>⬇ Download</a>
           </div>
         </div>
+
+        <div id="resultInfo" class="result-info">
+          <div class="result-label">Video Topic</div>
+          <div id="resultTopic" class="result-topic">—</div>
+
+          <div class="result-label">Narration</div>
+          <div id="resultNarration" class="result-narration">—</div>
+
+          <div id="narrationBadge" class="narration-badge">
+            🎙️ Narration workflow enabled
+          </div>
+        </div>
       </section>
 
       <aside class="card">
@@ -668,6 +729,10 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
     const videoPlayer = document.getElementById("videoPlayer");
     const openVideo = document.getElementById("openVideo");
     const downloadVideo = document.getElementById("downloadVideo");
+    const resultInfo = document.getElementById("resultInfo");
+    const resultTopic = document.getElementById("resultTopic");
+    const resultNarration = document.getElementById("resultNarration");
+    const narrationBadge = document.getElementById("narrationBadge");
 
     const authBackdrop = document.getElementById("authBackdrop");
     const closeAuthBtn = document.getElementById("closeAuthBtn");
@@ -785,7 +850,14 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
       if (!data) return null;
 
       if (typeof data === "object" && !Array.isArray(data)) {
-        const possibleKeys = ["video_url", "final_video_url", "secure_url", "url"];
+        const possibleKeys = [
+          "narrated_video_url",
+          "audio_video_url",
+          "final_video_url",
+          "video_url",
+          "secure_url",
+          "url"
+        ];
 
         for (const key of possibleKeys) {
           if (typeof data[key] === "string" && data[key].startsWith("http")) {
@@ -809,6 +881,33 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
       return null;
     }
 
+    function findFirstValue(data, keys) {
+      if (!data) return "";
+
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          const value = findFirstValue(item, keys);
+          if (value) return value;
+        }
+        return "";
+      }
+
+      if (typeof data === "object") {
+        for (const key of keys) {
+          if (typeof data[key] === "string" && data[key].trim()) {
+            return data[key].trim();
+          }
+        }
+
+        for (const key of Object.keys(data)) {
+          const value = findFirstValue(data[key], keys);
+          if (value) return value;
+        }
+      }
+
+      return "";
+    }
+
     async function generateVideo() {
       if (!requireLogin()) return;
 
@@ -816,6 +915,10 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
       generateBtn.textContent = "⏳ Generating Video...";
 
       videoBox.style.display = "none";
+      resultInfo.classList.remove("show");
+      resultTopic.textContent = "—";
+      resultNarration.textContent = "—";
+      narrationBadge.textContent = "🎙️ Narration workflow enabled";
       videoPlayer.removeAttribute("src");
       openVideo.href = "#";
       downloadVideo.href = "#";
@@ -826,7 +929,9 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
       );
 
       const topic = topicInput.value.trim();
-      const requestBody = topic ? { topic } : {};
+      const requestBody = topic
+        ? { topic, add_narration: true, return_metadata: true }
+        : { add_narration: true, return_metadata: true };
 
       try {
         const response = await fetch(WEBHOOK_URL, {
@@ -849,6 +954,16 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
         }
 
         const videoUrl = findVideoUrl(data);
+        const generatedTopic = findFirstValue(data, [
+          "topic",
+          "title",
+          "video_topic"
+        ]);
+        const narration = findFirstValue(data, [
+          "narration",
+          "narration_text",
+          "script"
+        ]);
 
         if (!videoUrl) {
           throw new Error(
@@ -857,13 +972,25 @@ Agar topic blank chhor dein to AI khud topic generate karega."></textarea>
           );
         }
 
+        resultTopic.textContent = generatedTopic || topic || "AI generated topic";
+        resultNarration.textContent =
+          narration || "Narration text n8n response mein abhi return nahi hua.";
+
+        narrationBadge.textContent = narration
+          ? "🎙️ Narration text received"
+          : "⏳ Narration text pending from n8n";
+
+        resultInfo.classList.add("show");
+
         videoPlayer.src = videoUrl;
         openVideo.href = videoUrl;
         downloadVideo.href = videoUrl;
         videoBox.style.display = "block";
 
         showStatus(
-          "✅ Video successfully generate ho gayi!\n\nNeeche video play kar sakte hain.",
+          narration
+            ? "✅ Video successfully generate ho gayi aur topic + narration mil gayi."
+            : "✅ Video successfully generate ho gayi. Narration workflow n8n response ka wait kar raha hai.",
           "success"
         );
 
