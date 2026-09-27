@@ -816,6 +816,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         </div>
 
         <div id="resultInfo" class="result-info">
+          <div style="font-size:15px;font-weight:900;color:#eaf1ff;margin-bottom:14px;">📋 Video Details</div>
           <div class="result-label">Video Topic</div>
           <div id="resultTopic" class="result-topic">—</div>
 
@@ -1429,7 +1430,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           "success"
         );
 
-        videoBox.scrollIntoView({ behavior: "smooth", block: "center" });
+        resultInfo.scrollIntoView({ behavior: "smooth", block: "center" });
 
       } catch (error) {
         console.error("Video generation error:", error);
