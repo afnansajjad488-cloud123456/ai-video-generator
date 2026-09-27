@@ -447,6 +447,70 @@
 
     .auth-modal h3 { font-size: 25px; margin-bottom: 7px; }
     .auth-modal .muted { color: var(--muted); font-size: 13px; line-height: 1.5; margin-bottom: 18px; }
+    .auth-brand {
+      display:flex;
+      align-items:center;
+      gap:11px;
+      margin-bottom:18px;
+    }
+    .auth-brand-mark {
+      width:42px;
+      height:42px;
+      border-radius:13px;
+      display:grid;
+      place-items:center;
+      background:linear-gradient(135deg,var(--blue),var(--purple));
+      box-shadow:0 12px 30px rgba(79,140,255,.22);
+      font-size:20px;
+    }
+    .auth-brand strong { display:block; font-size:14px; }
+    .auth-brand span { display:block; color:#7383a2; font-size:10px; margin-top:2px; }
+    .auth-security {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin:0 0 16px;
+    }
+    .auth-security span {
+      padding:6px 9px;
+      border-radius:999px;
+      background:rgba(255,255,255,.035);
+      border:1px solid rgba(255,255,255,.07);
+      color:#91a0bd;
+      font-size:10px;
+      font-weight:800;
+    }
+    .password-wrap { position:relative; }
+    .password-wrap input { padding-right:72px; }
+    .password-toggle {
+      position:absolute;
+      right:8px;
+      top:50%;
+      transform:translateY(-50%);
+      border:0;
+      background:transparent;
+      color:#8291ad;
+      cursor:pointer;
+      font-size:11px;
+      font-weight:800;
+    }
+    .password-hint {
+      margin-top:6px;
+      color:#697894;
+      font-size:10px;
+    }
+    .auth-legal {
+      margin-top:13px;
+      color:#66758f;
+      font-size:10px;
+      line-height:1.55;
+      text-align:center;
+    }
+    .auth-legal strong { color:#9eacc5; }
+    .auth-success {
+      color:#aef0ca !important;
+    }
+
 
     .tabs {
       display: grid;
@@ -779,46 +843,72 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     <div class="auth-modal">
       <button id="closeAuthBtn" class="close-modal" aria-label="Close">×</button>
 
+      <div class="auth-brand">
+        <div class="auth-brand-mark">⚡</div>
+        <div>
+          <strong>ShortForge AI</strong>
+          <span>Secure account access</span>
+        </div>
+      </div>
+
       <h3 id="authTitle">Welcome back</h3>
       <p id="authIntro" class="muted">Login karein aur apna AI Short generate karein.</p>
 
+      <div class="auth-security">
+        <span>🔒 Secure sign-in</span>
+        <span>✓ Email verification</span>
+        <span>⚡ AI creator access</span>
+      </div>
+
       <div class="tabs">
-        <button id="loginTab" class="tab active">Login</button>
-        <button id="signupTab" class="tab">Sign up</button>
+        <button id="loginTab" class="tab active" type="button">Login</button>
+        <button id="signupTab" class="tab" type="button">Create account</button>
       </div>
 
       <form id="authForm">
         <div id="nameField" class="field" style="display:none;">
-          <label for="authName">Name</label>
-          <input id="authName" type="text" placeholder="Your name" autocomplete="name">
+          <label for="authName">Full name</label>
+          <input id="authName" type="text" placeholder="e.g. Afnan Sajjad" autocomplete="name">
         </div>
 
         <div class="field">
-          <label for="authEmail">Email</label>
+          <label for="authEmail">Email address</label>
           <input id="authEmail" type="email" placeholder="you@example.com" autocomplete="email" required>
         </div>
 
         <div class="field">
           <label for="authPassword">Password</label>
-          <input id="authPassword" type="password" placeholder="At least 6 characters" autocomplete="current-password" required>
+          <div class="password-wrap">
+            <input id="authPassword" type="password" placeholder="Minimum 6 characters" autocomplete="current-password" required>
+            <button id="togglePassword" class="password-toggle" type="button">Show</button>
+          </div>
+          <div class="password-hint">Use at least 6 characters for this demo account.</div>
         </div>
 
         <div id="confirmField" class="field" style="display:none;">
           <label for="authConfirm">Confirm password</label>
-          <input id="authConfirm" type="password" placeholder="Repeat password" autocomplete="new-password">
+          <div class="password-wrap">
+            <input id="authConfirm" type="password" placeholder="Re-enter your password" autocomplete="new-password">
+            <button id="toggleConfirmPassword" class="password-toggle" type="button">Show</button>
+          </div>
         </div>
 
         <div id="verifyStep" class="verify-box" style="display:none;">
-          <strong>📩 Email verification</strong><br>
-          Verification code enter karein. Real email delivery ke liye backend email service connect karni hogi.
-          <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000">
+          <strong>📩 Verify your email</strong><br>
+          6-digit verification code enter karein. Demo mode mein code browser console mein available hai; real Gmail delivery ke liye backend email service connect karni hogi.
+          <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
         </div>
+
         <button id="authSubmit" class="auth-submit" type="submit">Login</button>
         <div id="authMessage" class="auth-message"></div>
       </form>
 
+      <div class="auth-legal">
+        Continue karke aap ShortForge AI ke <strong>account access rules</strong> accept karte hain.
+      </div>
+
       <div class="auth-note">
-        Note: abhi account data browser local storage par based hai. Email verification UI included hai; real email OTP delivery aur secure multi-device accounts ke liye backend (Firebase/Supabase/your API) connect karna hoga.
+        Demo account data browser local storage par based hai. Production mein secure multi-device accounts aur real Gmail OTP ke liye backend authentication required hoga.
       </div>
     </div>
   </div>
@@ -862,6 +952,23 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     const authEmail = document.getElementById("authEmail");
     const authPassword = document.getElementById("authPassword");
     const authConfirm = document.getElementById("authConfirm");
+    const togglePassword = document.getElementById("togglePassword");
+    const toggleConfirmPassword = document.getElementById("toggleConfirmPassword");
+
+    function togglePasswordVisibility(input, button) {
+      const visible = input.type === "text";
+      input.type = visible ? "password" : "text";
+      button.textContent = visible ? "Show" : "Hide";
+    }
+
+    togglePassword.addEventListener("click", () =>
+      togglePasswordVisibility(authPassword, togglePassword)
+    );
+
+    toggleConfirmPassword.addEventListener("click", () =>
+      togglePasswordVisibility(authConfirm, toggleConfirmPassword)
+    );
+
 
     let authMode = "login";
     let pendingVerification = null;
