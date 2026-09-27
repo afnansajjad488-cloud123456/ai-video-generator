@@ -803,6 +803,7 @@
 Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
         <button id="generateBtn" class="generate-btn">🔐 Login / Sign up to Generate</button>
+        <div id="dailyLimitText" style="margin-top:9px;color:#8fa2c7;font-size:11px;font-weight:800;text-align:center;">Daily limit: 4 videos per account</div>
 
         <div id="status" class="status"></div>
 
@@ -1217,6 +1218,56 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       }
     }
 
+    const DAILY_VIDEO_LIMIT = 4;
+
+    function getDailyUsage(user) {
+      const today = new Date().toISOString().slice(0, 10);
+      const email = (user?.email || "").trim().toLowerCase();
+      if (!email) return { date: today, count: 0 };
+      try {
+        const all = JSON.parse(localStorage.getItem("shortForgeDailyUsage") || "{}");
+        const record = all[email];
+        if (!record || record.date !== today) return { date: today, count: 0 };
+        return { date: today, count: Number(record.count) || 0 };
+      } catch { return { date: today, count: 0 }; }
+    }
+
+    function setDailyUsage(user, count) {
+      const today = new Date().toISOString().slice(0, 10);
+      const email = (user?.email || "").trim().toLowerCase();
+      if (!email) return;
+      try {
+        const all = JSON.parse(localStorage.getItem("shortForgeDailyUsage") || "{}");
+        all[email] = { date: today, count };
+        localStorage.setItem("shortForgeDailyUsage", JSON.stringify(all));
+      } catch {}
+    }
+
+    function updateDailyLimitUI() {
+      const el = document.getElementById("dailyLimitText");
+      const user = getCurrentUser();
+      if (!el) return;
+      if (!user) { el.textContent = "Daily limit: 4 videos per account"; return; }
+      const usage = getDailyUsage(user);
+      el.textContent = "Today: " + usage.count + "/4 videos used • " + Math.max(0, 4 - usage.count) + " remaining";
+    }
+
+    function canGenerateToday(user) {
+      const usage = getDailyUsage(user);
+      if (usage.count >= DAILY_VIDEO_LIMIT) {
+        showStatus("⚠️ Aaj ki 4 video limit complete ho gayi hai.\n\nKal dobara 4 videos generate kar sakte hain.", "error");
+        updateDailyLimitUI();
+        return false;
+      }
+      return true;
+    }
+
+    function recordSuccessfulVideo(user) {
+      const usage = getDailyUsage(user);
+      setDailyUsage(user, usage.count + 1);
+      updateDailyLimitUI();
+    }
+
     function requireLogin() {
       if (!getCurrentUser()) {
         showAuthPage("login");
@@ -1289,6 +1340,8 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
     async function generateVideo() {
       if (!requireLogin()) return;
+      const currentUser = getCurrentUser();
+      if (!canGenerateToday(currentUser)) return;
 
       generateBtn.disabled = true;
       generateBtn.textContent = "⏳ Generating Video...";
@@ -1318,3 +1371,268 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(requestBody)
         });
+
+
+        const responseText = await response.text();
+
+        if (!response.ok) {
+          throw new Error("n8n HTTP Error " + response.status + "\n\n" + responseText);
+        }
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          data = responseText;
+        }
+
+        const videoUrl = findVideoUrl(data);
+        const generatedTopic = findFirstValue(data, [
+          "topic",
+          "title",
+          "video_topic"
+        ]);
+        const narration = findFirstValue(data, [
+          "narration",
+          "narration_text",
+          "script"
+        ]);
+
+        if (!videoUrl) {
+          throw new Error(
+            "n8n se response mila, lekin video URL nahi mila.\n\nn8n Response:\n" +
+            responseText
+          );
+        }
+
+        recordSuccessfulVideo(currentUser);
+
+        resultTopic.textContent = generatedTopic || topic || "AI generated topic";
+        resultNarration.textContent =
+          narration || "Narration text n8n response mein abhi return nahi hua.";
+
+        narrationBadge.textContent = narration
+          ? "🎙️ Narration text received"
+          : "⏳ Narration text pending from n8n";
+
+        resultInfo.classList.add("show");
+
+        videoPlayer.src = videoUrl;
+        openVideo.href = videoUrl;
+        downloadVideo.href = videoUrl;
+        videoBox.style.display = "block";
+
+        showStatus(
+          narration
+            ? "✅ Video successfully generate ho gayi aur topic + narration mil gayi."
+            : "✅ Video successfully generate ho gayi. Narration workflow n8n response ka wait kar raha hai.",
+          "success"
+        );
+
+        videoBox.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      } catch (error) {
+        console.error("Video generation error:", error);
+
+        let errorMessage = error.message || "Unknown error";
+
+        if (error.name === "TypeError" && error.message === "Failed to fetch") {
+          errorMessage =
+            "Failed to fetch.\n\n" +
+            "Possible reasons:\n" +
+            "1. n8n webhook reachable nahi hai.\n" +
+            "2. n8n workflow Active nahi hai.\n" +
+            "3. Webhook URL incorrect hai.\n" +
+            "4. Browser CORS request block kar raha hai.\n\n" +
+            "n8n → Executions mein check karein.";
+        }
+
+        showStatus(
+          "❌ Video generate nahi hui.\n\nError:\n" +
+          errorMessage +
+          "\n\nn8n ke Executions section mein workflow check karein.",
+          "error"
+        );
+
+      } finally {
+        generateBtn.disabled = false;
+        flow1.addEventListener("click", () => showLanding());
+    flow3.addEventListener("click", () => {
+      if (getCurrentUser()) showCreator();
+      else showAuthPage("login");
+    });
+
+    updateAccountUI();
+
+      }
+    }
+
+    authForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+      authMessage.textContent = "";
+
+      const email = authEmail.value.trim().toLowerCase();
+      const password = authPassword.value;
+
+      if (!email || password.length < 6) {
+        authMessage.textContent = "Email aur kam az kam 6-character password dein.";
+        return;
+      }
+
+      const users = getUsers();
+
+      if (authMode === "signup") {
+        const name = authName.value.trim();
+        const confirm = authConfirm.value;
+
+        if (!name) {
+          authMessage.textContent = "Apna naam enter karein.";
+          return;
+        }
+
+        if (password !== confirm) {
+          authMessage.textContent = "Passwords match nahi karte.";
+          return;
+        }
+
+        if (users.some(user => user.email === email)) {
+          authMessage.textContent = "Is email ka account already mojood hai. Login karein.";
+          return;
+        }
+
+        const passwordHash = await hashPassword(password);
+        const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+        pendingVerification = {
+          name,
+          email,
+          passwordHash,
+          code: verificationCode
+        };
+
+        verifyStep.style.display = "block";
+        authSubmit.textContent = "Verify & Create Account";
+        authMessage.textContent = "Verification step ready. Demo mode mein code neeche console mein available hai.";
+        console.info("ShortForge AI demo verification code:", verificationCode);
+        verifyCode.focus();
+        return;
+      }
+
+      if (pendingVerification) {
+        if (verifyCode.value.trim() !== pendingVerification.code) {
+          authMessage.textContent = "Verification code incorrect hai.";
+          return;
+        }
+
+        const verifiedUser = {
+          name: pendingVerification.name,
+          email: pendingVerification.email,
+          passwordHash: pendingVerification.passwordHash,
+          verified: true
+        };
+
+        users.push(verifiedUser);
+        localStorage.setItem("aiUrduShortsUsers", JSON.stringify(users));
+        setCurrentUser({ name: verifiedUser.name, email: verifiedUser.email, verified: true });
+        pendingVerification = null;
+        verifyStep.style.display = "none";
+        closeAuth();
+        updateAccountUI();
+        showCreator();
+        showStatus("✅ Email verification complete. Ab AI video generator unlocked hai.", "success");
+        return;
+      }
+
+      const passwordHash = await hashPassword(password);
+      const user = users.find(
+        item => item.email === email && item.passwordHash === passwordHash && item.verified === true
+      );
+
+      if (!user) {
+        authMessage.textContent = "Email ya password incorrect hai.";
+        return;
+      }
+
+      setCurrentUser({ name: user.name, email: user.email });
+      closeAuth();
+      updateAccountUI();
+      showCreator();
+      showStatus("✅ Login successful. AI video generator unlock ho gaya.", "success");
+    });
+
+    loginTab.addEventListener("click", () => setAuthMode("login"));
+    signupTab.addEventListener("click", () => setAuthMode("signup"));
+
+    loginTopBtn.addEventListener("click", () => showAuthPage("login"));
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("aiUrduShortsCurrentUser");
+      updateAccountUI();
+      showLanding();
+      showStatus("Aap logout ho gaye hain.", "loading");
+    });
+
+    closeAuthBtn.addEventListener("click", closeAuth);
+
+    authBackdrop.addEventListener("click", function(event) {
+      if (event.target === authBackdrop) closeAuth();
+    });
+
+    heroStartBtn.addEventListener("click", function() {
+      if (getCurrentUser()) {
+        document.getElementById("creatorCard").scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      } else {
+        showAuthPage("signup");
+      }
+    });
+
+    heroWatchBtn.addEventListener("click", function() {
+      const heroVideo = document.querySelector(".hero-video");
+      const source = heroVideo.querySelector("source[src$='.mp4']");
+      const previewUrl = source ? source.src : "";
+
+      if (!previewUrl) {
+        showStatus("Preview video available nahi hai.", "error");
+        return;
+      }
+
+      previewPlayer.src = previewUrl;
+      previewModal.classList.add("show");
+      previewPlayer.currentTime = 0;
+      previewPlayer.play().catch(() => {});
+    });
+
+    function closePreview() {
+      previewPlayer.pause();
+      previewPlayer.removeAttribute("src");
+      previewPlayer.load();
+      previewModal.classList.remove("show");
+    }
+
+    previewCloseBtn.addEventListener("click", closePreview);
+
+    previewModal.addEventListener("click", function(event) {
+      if (event.target === previewModal) closePreview();
+    });
+
+    document.addEventListener("keydown", function(event) {
+      if (event.key === "Escape" && previewModal.classList.contains("show")) {
+        closePreview();
+      }
+    });
+
+    generateBtn.addEventListener("click", generateVideo);
+
+    topicInput.addEventListener("keydown", function(event) {
+      if (event.ctrlKey && event.key === "Enter") {
+        generateVideo();
+      }
+    });
+
+    updateDailyLimitUI();
+    updateAccountUI();
+  </script>
+</body>
+</html>
