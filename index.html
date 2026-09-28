@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#070b18">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop stop-color='%234f8cff'/%3E%3Cstop offset='1' stop-color='%238b5cf6'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='24' fill='%23050816'/%3E%3Cpath d='M27 30h27c13 0 22 8 22 19s-9 19-22 19H46l-12 10 3-10h-10z' fill='url(%23g)'/%3E%3Cpath d='M55 39l-7 12h8l-7 13 16-18h-9z' fill='white'/%3E%3C/svg%3E">
   <title>ShortForge AI — Urdu AI Shorts</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -932,7 +933,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
         <div id="verifyStep" class="verify-box" style="display:none;">
           <strong>📩 Verify your email</strong><br>
-          6-digit verification code enter karein. Demo mode mein code browser console mein available hai; real Gmail delivery ke liye backend email service connect karni hogi.
+          6-digit verification code aap ke email par bheja jayega. Sahi code enter karne ke baad hi account activate hoga.
           <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
         </div>
 
@@ -972,10 +973,10 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           </div>
         </div>
 
-        <button id="resetActionBtn" class="auth-submit" type="button">Send reset code</button>
+        <button id="resetActionBtn" class="auth-submit" type="button">Send reset email</button>
         <button id="backToLoginBtn" class="back-flow" type="button">← Back to Login</button>
         <div id="resetMessage" class="auth-message"></div>
-        <div class="forgot-demo-note">Demo mode: reset code browser console mein show hoga. Real Gmail delivery backend connect hone ke baad hogi.</div>
+        <div class="forgot-demo-note">Password reset email Supabase Auth ke through aap ke email par jayegi. Password kabhi owner ko nahi bheja jata.</div>
       </div>
 
       <div class="auth-legal">
@@ -983,13 +984,17 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       </div>
 
       <div class="auth-note">
-        Demo account data browser local storage par based hai. Production mein secure multi-device accounts aur real Gmail OTP ke liye backend authentication required hoga.
+        Accounts, passwords, sessions, email verification aur password reset Supabase Auth handle karta hai. Password website ya owner ko nahi dikhaya jata.
       </div>
     </div>
   </div>
 
   <script>
     const WEBHOOK_URL = "https://afnan804302.app.n8n.cloud/webhook/generate-short";
+    const SUPABASE_URL = "https://smrldvduiaowdmwkvgos.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TTXChi3QrYp1sYvbb4ywbA_joBfB7cJ";
+    const SITE_URL = "https://urduclipforge.com";
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
     const topicInput = document.getElementById("topic");
     const generateBtn = document.getElementById("generateBtn");
@@ -1058,9 +1063,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     );
 
 
-    let authMode = "login";
-    let pendingVerification = null;
-    let pendingPasswordReset = null;
 
     const landingPage = document.getElementById("landingPage");
     const creatorPage = document.getElementById("creatorPage");
@@ -1076,33 +1078,20 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       statusBox.textContent = message;
     }
 
-    function getUsers() {
-      try {
-        return JSON.parse(localStorage.getItem("aiUrduShortsUsers") || "[]");
-      } catch {
-        return [];
-      }
+    let currentUser = null;
+    let authMode = "login";
+    let pendingVerification = null;
+    let recoveryMode = false;
+
+    async function loadAuthSession() {
+      const { data } = await supabaseClient.auth.getSession();
+      currentUser = data.session?.user || null;
+      updateAccountUI();
+      updateDailyLimitUI();
+      if (currentUser) showCreator();
     }
 
-    function getCurrentUser() {
-      try {
-        return JSON.parse(localStorage.getItem("aiUrduShortsCurrentUser") || "null");
-      } catch {
-        return null;
-      }
-    }
-
-    function setCurrentUser(user) {
-      localStorage.setItem("aiUrduShortsCurrentUser", JSON.stringify(user));
-    }
-
-    async function hashPassword(password) {
-      const data = new TextEncoder().encode(password);
-      const hash = await crypto.subtle.digest("SHA-256", data);
-      return Array.from(new Uint8Array(hash))
-        .map(b => b.toString(16).padStart(2, "0"))
-        .join("");
-    }
+    function getCurrentUser() { return currentUser; }
 
     function openAuth(mode = "login") {
       setAuthMode(mode);
@@ -1117,59 +1106,61 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       verifyStep.style.display = "none";
       verifyCode.value = "";
       pendingVerification = null;
-      pendingPasswordReset = null;
+      recoveryMode = false;
       forgotBox.style.display = "none";
       authForm.style.display = "block";
       document.querySelector(".tabs").style.display = "grid";
-      if (getCurrentUser()) showCreator();
+      resetEmail.disabled = false;
+      if (currentUser) showCreator();
     }
 
     function setAuthMode(mode) {
       authMode = mode;
       const signup = mode === "signup";
-
       loginTab.classList.toggle("active", !signup);
       signupTab.classList.toggle("active", signup);
-
       nameField.style.display = signup ? "block" : "none";
       confirmField.style.display = signup ? "block" : "none";
-
       authTitle.textContent = signup ? "Create your account" : "Welcome back";
       authIntro.textContent = signup
-        ? "Free account banayein aur AI Shorts creator unlock karein."
+        ? "Free account banayein. Email par OTP verify karke creator unlock hoga."
         : "Login karein aur apna AI Short generate karein.";
       authSubmit.textContent = signup ? "Create account" : "Login";
+      authMessage.className = "auth-message";
       authMessage.textContent = "";
-      if (forgotBox) {
-        forgotBox.style.display = "none";
-        authForm.style.display = "block";
-        document.querySelector(".tabs").style.display = "grid";
-      }
+      forgotBox.style.display = "none";
+      authForm.style.display = "block";
+      document.querySelector(".tabs").style.display = "grid";
     }
 
-    function openForgotPassword() {
+    function openForgotPassword(fromRecovery = false) {
       authMode = "reset";
+      recoveryMode = !!fromRecovery;
       document.querySelector(".tabs").style.display = "none";
       authForm.style.display = "none";
       forgotBox.style.display = "block";
       resetCodeField.style.display = "none";
-      resetPasswordFields.style.display = "none";
-      resetActionBtn.textContent = "Send reset code";
+      resetEmail.disabled = recoveryMode;
+      resetPasswordFields.style.display = recoveryMode ? "block" : "none";
+      resetActionBtn.textContent = recoveryMode ? "Update Password" : "Send reset email";
+      resetMessage.className = "auth-message";
       resetMessage.textContent = "";
-      resetEmail.value = authEmail.value.trim().toLowerCase();
-      resetCode.value = "";
-      resetPassword.value = "";
-      resetConfirm.value = "";
-      setTimeout(() => resetEmail.focus(), 50);
+      if (!recoveryMode) {
+        resetEmail.value = authEmail.value.trim().toLowerCase();
+        resetPassword.value = "";
+        resetConfirm.value = "";
+        setTimeout(() => resetEmail.focus(), 50);
+      }
     }
 
     function backToLogin() {
       forgotBox.style.display = "none";
       authForm.style.display = "block";
       document.querySelector(".tabs").style.display = "grid";
+      resetEmail.disabled = false;
+      recoveryMode = false;
       setAuthMode("login");
       resetMessage.textContent = "";
-      pendingPasswordReset = null;
     }
 
     function showLanding() {
@@ -1201,11 +1192,9 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     }
 
     function updateAccountUI() {
-      const user = getCurrentUser();
-
-      if (user) {
+      if (currentUser) {
         userChip.style.display = "block";
-        userChip.textContent = "👤 " + (user.name || user.email);
+        userChip.textContent = "👤 " + (currentUser.user_metadata?.full_name || currentUser.email);
         loginTopBtn.style.display = "none";
         logoutBtn.style.display = "block";
         generateBtn.textContent = "🎬 Generate Video";
@@ -1221,56 +1210,59 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
     const DAILY_VIDEO_LIMIT = 4;
 
-    function getDailyUsage(user) {
-      const today = new Date().toISOString().slice(0, 10);
-      const email = (user?.email || "").trim().toLowerCase();
-      if (!email) return { date: today, count: 0 };
-      try {
-        const all = JSON.parse(localStorage.getItem("shortForgeDailyUsage") || "{}");
-        const record = all[email];
-        if (!record || record.date !== today) return { date: today, count: 0 };
-        return { date: today, count: Number(record.count) || 0 };
-      } catch { return { date: today, count: 0 }; }
+    async function getDailyUsage(user) {
+      if (!user) return { count: 0 };
+      const start = new Date();
+      start.setUTCHours(0, 0, 0, 0);
+      const end = new Date(start);
+      end.setUTCDate(end.getUTCDate() + 1);
+
+      const { count, error } = await supabaseClient
+        .from("video_generations")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .in("status", ["started", "success"])
+        .gte("created_at", start.toISOString())
+        .lt("created_at", end.toISOString());
+
+      if (error) {
+        console.error("Daily usage error:", error);
+        return { count: 0, error };
+      }
+      return { count: count || 0 };
     }
 
-    function setDailyUsage(user, count) {
-      const today = new Date().toISOString().slice(0, 10);
-      const email = (user?.email || "").trim().toLowerCase();
-      if (!email) return;
-      try {
-        const all = JSON.parse(localStorage.getItem("shortForgeDailyUsage") || "{}");
-        all[email] = { date: today, count };
-        localStorage.setItem("shortForgeDailyUsage", JSON.stringify(all));
-      } catch {}
-    }
-
-    function updateDailyLimitUI() {
+    async function updateDailyLimitUI() {
       const el = document.getElementById("dailyLimitText");
-      const user = getCurrentUser();
       if (!el) return;
-      if (!user) { el.textContent = "Daily limit: 4 videos per account"; return; }
-      const usage = getDailyUsage(user);
+      if (!currentUser) {
+        el.textContent = "Daily limit: 4 videos per account";
+        return;
+      }
+      const usage = await getDailyUsage(currentUser);
       el.textContent = "Today: " + usage.count + "/4 videos used • " + Math.max(0, 4 - usage.count) + " remaining";
     }
 
-    function canGenerateToday(user) {
-      const usage = getDailyUsage(user);
-      if (usage.count >= DAILY_VIDEO_LIMIT) {
-        showStatus("⚠️ Aaj ki 4 video limit complete ho gayi hai.\n\nKal dobara 4 videos generate kar sakte hain.", "error");
-        updateDailyLimitUI();
-        return false;
-      }
-      return true;
+    async function claimDailyGeneration(user, topic) {
+      const { data, error } = await supabaseClient.rpc("claim_daily_video_generation", {
+        p_topic: topic || null
+      });
+      if (error) throw error;
+      return data;
     }
 
-    function recordSuccessfulVideo(user) {
-      const usage = getDailyUsage(user);
-      setDailyUsage(user, usage.count + 1);
-      updateDailyLimitUI();
+    async function finalizeGeneration(generationId, patch) {
+      if (!generationId || !currentUser) return;
+      const { error } = await supabaseClient
+        .from("video_generations")
+        .update(patch)
+        .eq("id", generationId)
+        .eq("user_id", currentUser.id);
+      if (error) console.error("Generation update error:", error);
     }
 
     function requireLogin() {
-      if (!getCurrentUser()) {
+      if (!currentUser) {
         showAuthPage("login");
         return false;
       }
@@ -1342,7 +1334,23 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     async function generateVideo() {
       if (!requireLogin()) return;
       const currentUser = getCurrentUser();
-      if (!canGenerateToday(currentUser)) return;
+      const topic = topicInput.value.trim();
+
+      let quotaClaim;
+      try {
+        quotaClaim = await claimDailyGeneration(currentUser, topic);
+      } catch (quotaError) {
+        showStatus("❌ Daily quota check nahi ho saka.\n\n" + (quotaError.message || quotaError), "error");
+        return;
+      }
+
+      if (!quotaClaim?.allowed) {
+        showStatus("⚠️ Aaj ki 4 video limit complete ho gayi hai.\n\nKal dobara videos generate kar sakte hain.", "error");
+        await updateDailyLimitUI();
+        return;
+      }
+
+      const generationId = quotaClaim.generation_id;
 
       generateBtn.disabled = true;
       generateBtn.textContent = "⏳ Generating Video...";
@@ -1361,7 +1369,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         "loading"
       );
 
-      const topic = topicInput.value.trim();
       const requestBody = topic
         ? { topic, add_narration: true, return_metadata: true }
         : { add_narration: true, return_metadata: true };
@@ -1406,7 +1413,12 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           );
         }
 
-        recordSuccessfulVideo(currentUser);
+        await finalizeGeneration(generationId, {
+          status: "success",
+          video_url: videoUrl,
+          narration: narration || null
+        });
+        await updateDailyLimitUI();
 
         resultTopic.textContent = generatedTopic || topic || "AI generated topic";
         resultNarration.textContent =
@@ -1433,6 +1445,10 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         resultInfo.scrollIntoView({ behavior: "smooth", block: "center" });
 
       } catch (error) {
+        if (typeof generationId !== "undefined" && generationId) {
+          await finalizeGeneration(generationId, { status: "failed" });
+          await updateDailyLimitUI();
+        }
         console.error("Video generation error:", error);
 
         let errorMessage = error.message || "Unknown error";
@@ -1470,6 +1486,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
     authForm.addEventListener("submit", async function(event) {
       event.preventDefault();
+      authMessage.className = "auth-message";
       authMessage.textContent = "";
 
       const email = authEmail.value.trim().toLowerCase();
@@ -1480,9 +1497,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         return;
       }
 
-      const users = getUsers();
-
-      if (authMode === "signup") {
+      if (authMode === "signup" && !pendingVerification) {
         const name = authName.value.trim();
         const confirm = authConfirm.value;
 
@@ -1490,87 +1505,189 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           authMessage.textContent = "Apna naam enter karein.";
           return;
         }
-
         if (password !== confirm) {
           authMessage.textContent = "Passwords match nahi karte.";
           return;
         }
 
-        if (users.some(user => user.email === email)) {
-          authMessage.textContent = "Is email ka account already mojood hai. Login karein.";
+        authSubmit.disabled = true;
+        authSubmit.textContent = "Sending OTP...";
+
+        const { error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { full_name: name },
+            emailRedirectTo: SITE_URL
+          }
+        });
+
+        authSubmit.disabled = false;
+
+        if (error) {
+          authSubmit.textContent = "Create account";
+          authMessage.textContent = error.message;
           return;
         }
 
-        const passwordHash = await hashPassword(password);
-        const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
-        pendingVerification = {
-          name,
-          email,
-          passwordHash,
-          code: verificationCode
-        };
-
+        pendingVerification = { email, name };
         verifyStep.style.display = "block";
         authSubmit.textContent = "Verify & Create Account";
-        authMessage.textContent = "Verification step ready. Demo mode mein code neeche console mein available hai.";
-        console.info("ShortForge AI demo verification code:", verificationCode);
+        authMessage.className = "auth-message auth-success";
+        authMessage.textContent = "OTP aap ke email par bhej diya gaya hai. Code enter karein.";
         verifyCode.focus();
         return;
       }
 
       if (pendingVerification) {
-        if (verifyCode.value.trim() !== pendingVerification.code) {
-          authMessage.textContent = "Verification code incorrect hai.";
+        const token = verifyCode.value.trim();
+
+        if (!/^\d{6,8}$/.test(token)) {
+          authMessage.textContent = "Verification code enter karein.";
           return;
         }
 
-        const verifiedUser = {
-          name: pendingVerification.name,
-          email: pendingVerification.email,
-          passwordHash: pendingVerification.passwordHash,
-          verified: true
-        };
+        authSubmit.disabled = true;
+        authSubmit.textContent = "Verifying...";
 
-        users.push(verifiedUser);
-        localStorage.setItem("aiUrduShortsUsers", JSON.stringify(users));
-        setCurrentUser({ name: verifiedUser.name, email: verifiedUser.email, verified: true });
+        const { data, error } = await supabaseClient.auth.verifyOtp({
+          email: pendingVerification.email,
+          token,
+          type: "email"
+        });
+
+        authSubmit.disabled = false;
+
+        if (error) {
+          authSubmit.textContent = "Verify & Create Account";
+          authMessage.textContent = "Verification code incorrect ya expire ho gaya hai.";
+          return;
+        }
+
+        currentUser = data.user || null;
         pendingVerification = null;
         verifyStep.style.display = "none";
+        authMessage.className = "auth-message auth-success";
+        authMessage.textContent = "✅ Email verified. Account activate ho gaya.";
+        await new Promise(resolve => setTimeout(resolve, 250));
         closeAuth();
         updateAccountUI();
+        updateDailyLimitUI();
         showCreator();
         showStatus("✅ Email verification complete. Ab AI video generator unlocked hai.", "success");
         return;
       }
 
-      const passwordHash = await hashPassword(password);
-      const user = users.find(
-        item => item.email === email && item.passwordHash === passwordHash && item.verified === true
-      );
+      authSubmit.disabled = true;
+      authSubmit.textContent = "Logging in...";
 
-      if (!user) {
-        authMessage.textContent = "Email ya password incorrect hai.";
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+      authSubmit.disabled = false;
+      authSubmit.textContent = "Login";
+
+      if (error) {
+        if (error.message?.toLowerCase().includes("email not confirmed")) {
+          pendingVerification = { email };
+          verifyStep.style.display = "block";
+          authMessage.textContent = "Email abhi verify nahi hui. Apna OTP enter karein.";
+        } else {
+          authMessage.textContent = error.message;
+        }
         return;
       }
 
-      setCurrentUser({ name: user.name, email: user.email });
+      currentUser = data.user;
       closeAuth();
       updateAccountUI();
+      updateDailyLimitUI();
       showCreator();
       showStatus("✅ Login successful. AI video generator unlock ho gaya.", "success");
     });
 
     loginTab.addEventListener("click", () => setAuthMode("login"));
     signupTab.addEventListener("click", () => setAuthMode("signup"));
-
     loginTopBtn.addEventListener("click", () => showAuthPage("login"));
 
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("aiUrduShortsCurrentUser");
+    logoutBtn.addEventListener("click", async () => {
+      await supabaseClient.auth.signOut();
+      currentUser = null;
       updateAccountUI();
       showLanding();
       showStatus("Aap logout ho gaye hain.", "loading");
     });
+
+    forgotPasswordLink.addEventListener("click", () => openForgotPassword(false));
+    backToLoginBtn.addEventListener("click", backToLogin);
+
+    resetActionBtn.addEventListener("click", async () => {
+      resetMessage.className = "auth-message";
+      resetMessage.textContent = "";
+
+      if (recoveryMode) {
+        const newPassword = resetPassword.value;
+        const confirmPassword = resetConfirm.value;
+
+        if (newPassword.length < 6) {
+          resetMessage.textContent = "New password kam az kam 6 characters ka ho.";
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          resetMessage.textContent = "Passwords match nahi karte.";
+          return;
+        }
+
+        resetActionBtn.disabled = true;
+        resetActionBtn.textContent = "Updating...";
+        const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
+        resetActionBtn.disabled = false;
+
+        if (error) {
+          resetActionBtn.textContent = "Update Password";
+          resetMessage.textContent = error.message;
+          return;
+        }
+
+        resetActionBtn.textContent = "Password Updated";
+        resetMessage.className = "auth-message auth-success";
+        resetMessage.textContent = "✅ Password update ho gaya. Ab login karein.";
+        await supabaseClient.auth.signOut();
+        currentUser = null;
+        recoveryMode = false;
+        setTimeout(backToLogin, 900);
+        return;
+      }
+
+      const email = resetEmail.value.trim().toLowerCase();
+      if (!email) {
+        resetMessage.textContent = "Email address enter karein.";
+        return;
+      }
+
+      resetActionBtn.disabled = true;
+      resetActionBtn.textContent = "Sending...";
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+        redirectTo: SITE_URL
+      });
+      resetActionBtn.disabled = false;
+      resetActionBtn.textContent = "Send reset email";
+
+      if (error) {
+        resetMessage.textContent = error.message;
+        return;
+      }
+
+      resetMessage.className = "auth-message auth-success";
+      resetMessage.textContent = "✅ Agar account mojood hai to reset email bhej di gayi hai. Email khol kar link se naya password set karein.";
+    });
+
+    toggleResetPassword.addEventListener("click", () =>
+      togglePasswordVisibility(resetPassword, toggleResetPassword)
+    );
+
+    toggleResetConfirm.addEventListener("click", () =>
+      togglePasswordVisibility(resetConfirm, toggleResetConfirm)
+    );
 
     closeAuthBtn.addEventListener("click", closeAuth);
 
@@ -1632,8 +1749,22 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       }
     });
 
-    updateDailyLimitUI();
-    updateAccountUI();
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      currentUser = session?.user || null;
+
+      if (event === "PASSWORD_RECOVERY") {
+        setTimeout(() => {
+          showAuthPage("login");
+          openForgotPassword(true);
+        }, 0);
+        return;
+      }
+
+      updateAccountUI();
+      updateDailyLimitUI();
+    });
+
+    loadAuthSession();
   </script>
 </body>
 </html>
