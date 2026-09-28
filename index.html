@@ -1425,11 +1425,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           );
         }
 
-        await finalizeGeneration(generationId, {
-          status: "success",
-          video_url: videoUrl,
-          narration: narration || null
-        });
         await updateDailyLimitUI();
 
         resultTopic.textContent = generatedTopic || topic || "AI generated topic";
@@ -1459,10 +1454,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       } catch (error) {
         console.error("Video generation error:", error);
 
-        if (generationId) {
-          await finalizeGeneration(generationId, { status: "failed" });
-          await updateDailyLimitUI();
-        }
+        await updateDailyLimitUI();
 
         showStatus(
           "❌ Video generate nahi hui.\n\nError:\n" +
