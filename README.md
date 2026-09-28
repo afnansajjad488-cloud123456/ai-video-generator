@@ -4,7 +4,7 @@ ShortForge AI is an AI-powered Urdu video studio for creating faceless YouTube S
 
 ## Website
 
-https://urduclipforge.com
+https://afnansajjad488-cloud123456.github.io/ai-video-generator/
 
 ## Features
 
@@ -14,7 +14,7 @@ https://urduclipforge.com
 - Scene-based visual generation workflow
 - Automated video generation through n8n
 - Generated video preview with video topic and narration details
-- Browser-based account UI with email verification/reset flow planned for secure backend integration
+- Supabase Auth account UI with email verification and password-reset flows
 - Daily generation limit UI
 - Responsive dark AI-style interface
 
