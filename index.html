@@ -1221,7 +1221,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         .from("video_generations")
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id)
-        .in("status", ["started", "success"])
         .gte("created_at", start.toISOString())
         .lt("created_at", end.toISOString());
 
@@ -1253,12 +1252,15 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
     async function finalizeGeneration(generationId, patch) {
       if (!generationId || !currentUser) return;
-      const { error } = await supabaseClient
-        .from("video_generations")
-        .update(patch)
-        .eq("id", generationId)
-        .eq("user_id", currentUser.id);
-      if (error) console.error("Generation update error:", error);
+
+      const { error } = await supabaseClient.rpc("finalize_video_generation", {
+        p_generation_id: generationId,
+        p_video_url: patch?.video_url || null,
+        p_narration: patch?.narration || null,
+        p_status: patch?.status || "success"
+      });
+
+      if (error) console.error("Generation finalize error:", error);
     }
 
     function requireLogin() {
