@@ -1490,6 +1490,24 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       }
     }
 
+
+    async function sendAuthNotification(eventName) {
+      try {
+        const { data } = await supabaseClient.auth.getSession();
+        if (!data?.session?.access_token) return;
+
+        const { error } = await supabaseClient.functions.invoke("auth-notification", {
+          body: { event: eventName }
+        });
+
+        if (error) {
+          console.warn("Auth notification failed:", error.message || error);
+        }
+      } catch (error) {
+        console.warn("Auth notification request failed:", error);
+      }
+    }
+
     authForm.addEventListener("submit", async function(event) {
       event.preventDefault();
       authMessage.className = "auth-message";
@@ -1536,7 +1554,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           return;
         }
 
-        pendingVerification = { email, name };
+        pendingVerification = { email, name, event: "New Signup" };
         verifyStep.style.display = "block";
         authSubmit.textContent = "Verify Code";
         authMessage.className = "auth-message auth-success";
@@ -1570,16 +1588,19 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           return;
         }
 
+        const notificationEvent = pendingVerification?.event || "Login";
         currentUser = data.user || null;
         pendingVerification = null;
         verifyStep.style.display = "none";
         authMessage.className = "auth-message auth-success";
         authMessage.textContent = "✅ Email verified. Account activate ho gaya.";
+        await sendAuthNotification(notificationEvent);
         await new Promise(resolve => setTimeout(resolve, 250));
         closeAuth();
         updateAccountUI();
         updateDailyLimitUI();
         showCreator();
+        await sendAuthNotification(pendingVerification?.event || "Login");
         showStatus("✅ Email verification complete. Ab AI video generator unlocked hai.", "success");
         return;
       }
@@ -1612,7 +1633,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
             }
             return;
           }
-          pendingVerification = { email, type: "email" };
+          pendingVerification = { email, type: "email", event: "Login" };
           verifyStep.style.display = "block";
           authMessage.className = "auth-message auth-success";
           authMessage.textContent = "Email verify nahi hui. 6-digit verification code aap ke email par bhej diya gaya hai.";
@@ -1624,6 +1645,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       }
 
       currentUser = data.user;
+      await sendAuthNotification("Login");
       closeAuth();
       updateAccountUI();
       updateDailyLimitUI();
