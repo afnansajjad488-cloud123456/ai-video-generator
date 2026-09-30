@@ -1537,9 +1537,9 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
         pendingVerification = { email, name };
         verifyStep.style.display = "block";
-        authSubmit.textContent = "Verify & Create Account";
+        authSubmit.textContent = "Verify Code";
         authMessage.className = "auth-message auth-success";
-        authMessage.textContent = "OTP aap ke email par bhej diya gaya hai. Code enter karein.";
+        authMessage.textContent = "6-digit verification code aap ke email par bhej diya gaya hai. Code enter karein.";
         verifyCode.focus();
         return;
       }
@@ -1558,13 +1558,13 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         const { data, error } = await supabaseClient.auth.verifyOtp({
           email: pendingVerification.email,
           token,
-          type: "email"
+          type: pendingVerification.type || "signup"
         });
 
         authSubmit.disabled = false;
 
         if (error) {
-          authSubmit.textContent = "Verify & Create Account";
+          authSubmit.textContent = "Verify Code";
           authMessage.textContent = "Verification code incorrect ya expire ho gaya hai.";
           return;
         }
@@ -1593,9 +1593,23 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
       if (error) {
         if (error.message?.toLowerCase().includes("email not confirmed")) {
-          pendingVerification = { email };
+          authSubmit.disabled = true;
+          authSubmit.textContent = "Sending OTP...";
+          const otpResult = await supabaseClient.auth.signInWithOtp({
+            email,
+            options: { shouldCreateUser: false }
+          });
+          authSubmit.disabled = false;
+          authSubmit.textContent = "Login";
+          if (otpResult.error) {
+            authMessage.textContent = "Verification code send nahi ho saka: " + otpResult.error.message;
+            return;
+          }
+          pendingVerification = { email, type: "email" };
           verifyStep.style.display = "block";
-          authMessage.textContent = "Email abhi verify nahi hui. Apna OTP enter karein.";
+          authMessage.className = "auth-message auth-success";
+          authMessage.textContent = "Email verify nahi hui. 6-digit verification code aap ke email par bhej diya gaya hai.";
+          verifyCode.focus();
         } else {
           authMessage.textContent = error.message;
         }
