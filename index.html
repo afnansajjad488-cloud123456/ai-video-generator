@@ -961,11 +961,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           </div>
         </div>
 
-        <div id="verifyStep" class="verify-box" style="display:none;">
-          <strong>📩 Verify your email</strong><br>
-          6-digit verification code aap ke email par bheja jayega. Sahi code enter karne ke baad hi account activate hoga.
-          <input id="verifyCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
-        </div>
+        <button id="resendVerificationBtn" class="forgot-link" type="button" style="display:none; margin-top:10px;">Resend verification email</button>
 
         <button id="authSubmit" class="auth-submit" type="submit">Login</button>
         <div id="authMessage" class="auth-message"></div>
@@ -979,11 +975,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         <div class="field">
           <label for="resetEmail">Email address</label>
           <input id="resetEmail" type="email" placeholder="you@example.com" autocomplete="email">
-        </div>
-
-        <div id="resetCodeField" class="field" style="display:none;">
-          <label for="resetCode">Verification code</label>
-          <input id="resetCode" type="text" inputmode="numeric" maxlength="6" placeholder="000000" autocomplete="one-time-code">
         </div>
 
         <div id="resetPasswordFields" style="display:none;">
@@ -1073,14 +1064,13 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     const forgotPasswordLink = document.getElementById("forgotPasswordLink");
     const forgotBox = document.getElementById("forgotBox");
     const resetEmail = document.getElementById("resetEmail");
-    const resetCodeField = document.getElementById("resetCodeField");
-    const resetCode = document.getElementById("resetCode");
     const resetPasswordFields = document.getElementById("resetPasswordFields");
     const resetPassword = document.getElementById("resetPassword");
     const resetConfirm = document.getElementById("resetConfirm");
     const resetActionBtn = document.getElementById("resetActionBtn");
     const backToLoginBtn = document.getElementById("backToLoginBtn");
     const resetMessage = document.getElementById("resetMessage");
+    const resendVerificationBtn = document.getElementById("resendVerificationBtn");
     const toggleResetPassword = document.getElementById("toggleResetPassword");
     const toggleResetConfirm = document.getElementById("toggleResetConfirm");
 
@@ -1106,8 +1096,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     const flow1 = document.getElementById("flow1");
     const flow2 = document.getElementById("flow2");
     const flow3 = document.getElementById("flow3");
-    const verifyStep = document.getElementById("verifyStep");
-    const verifyCode = document.getElementById("verifyCode");
 
     function showStatus(message, type) {
       statusBox.className = "status " + type;
@@ -1116,7 +1104,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
 
     let currentUser = null;
     let authMode = "login";
-    let pendingVerification = null;
+    let pendingVerificationEmail = null;
     let recoveryMode = false;
 
     async function loadAuthSession() {
@@ -1139,9 +1127,8 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       authBackdrop.classList.remove("show");
       authMessage.textContent = "";
       authForm.reset();
-      verifyStep.style.display = "none";
-      verifyCode.value = "";
-      pendingVerification = null;
+      pendingVerificationEmail = null;
+      resendVerificationBtn.style.display = "none";
       recoveryMode = false;
       forgotBox.style.display = "none";
       authForm.style.display = "block";
@@ -1159,7 +1146,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       confirmField.style.display = signup ? "block" : "none";
       authTitle.textContent = signup ? "Create your account" : "Welcome back";
       authIntro.textContent = signup
-        ? "Free account banayein. Email par OTP verify karke creator unlock hoga."
+        ? "Free account banayein. Email par verification link click karke account activate karein."
         : "Login karein aur apna AI Short generate karein.";
       authSubmit.textContent = signup ? "Create account" : "Login";
       authMessage.className = "auth-message";
@@ -1175,7 +1162,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       document.querySelector(".tabs").style.display = "none";
       authForm.style.display = "none";
       forgotBox.style.display = "block";
-      resetCodeField.style.display = "none";
       resetEmail.disabled = recoveryMode;
       resetPasswordFields.style.display = recoveryMode ? "block" : "none";
       resetActionBtn.textContent = recoveryMode ? "Update Password" : "Send reset email";
@@ -1512,6 +1498,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       event.preventDefault();
       authMessage.className = "auth-message";
       authMessage.textContent = "";
+      resendVerificationBtn.style.display = "none";
 
       const email = authEmail.value.trim().toLowerCase();
       const password = authPassword.value;
@@ -1521,7 +1508,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         return;
       }
 
-      if (authMode === "signup" && !pendingVerification) {
+      if (authMode === "signup") {
         const name = authName.value.trim();
         const confirm = authConfirm.value;
 
@@ -1529,15 +1516,16 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           authMessage.textContent = "Apna naam enter karein.";
           return;
         }
+
         if (password !== confirm) {
           authMessage.textContent = "Passwords match nahi karte.";
           return;
         }
 
         authSubmit.disabled = true;
-        authSubmit.textContent = "Sending OTP...";
+        authSubmit.textContent = "Creating account...";
 
-        const { error } = await supabaseClient.auth.signUp({
+        const { data, error } = await supabaseClient.auth.signUp({
           email,
           password,
           options: {
@@ -1547,99 +1535,56 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         });
 
         authSubmit.disabled = false;
+        authSubmit.textContent = "Create account";
 
         if (error) {
-          authSubmit.textContent = "Create account";
           authMessage.textContent = error.message;
           return;
         }
 
-        pendingVerification = { email, name, event: "New Signup" };
-        verifyStep.style.display = "block";
-        authSubmit.textContent = "Verify Code";
-        authMessage.className = "auth-message auth-success";
-        authMessage.textContent = "6-digit verification code aap ke email par bhej diya gaya hai. Code enter karein.";
-        verifyCode.focus();
-        return;
-      }
+        // Remember the signup event across the verification-link redirect.
+        localStorage.setItem("shortforge_pending_auth_event", "New Signup");
+        pendingVerificationEmail = email;
+        resendVerificationBtn.style.display = "block";
 
-      if (pendingVerification) {
-        const token = verifyCode.value.trim();
-
-        if (!/^\d{6}$/.test(token)) {
-          authMessage.textContent = "6-digit verification code enter karein.";
-          return;
+        if (data?.session) {
+          currentUser = data.user || null;
+          localStorage.removeItem("shortforge_pending_auth_event");
+          await sendAuthNotification("New Signup");
+          closeAuth();
+          updateAccountUI();
+          updateDailyLimitUI();
+          showCreator();
+          showStatus("✅ Account create ho gaya. AI video generator unlock hai.", "success");
+        } else {
+          authMessage.className = "auth-message auth-success";
+          authMessage.textContent =
+            "✅ Account create ho gaya. Apni email inbox khol kar verification link par click karein. Verification ke baad account automatically activate ho jayega.";
         }
-
-        authSubmit.disabled = true;
-        authSubmit.textContent = "Verifying...";
-
-        const { data, error } = await supabaseClient.auth.verifyOtp({
-          email: pendingVerification.email,
-          token,
-          type: pendingVerification.type || "signup"
-        });
-
-        authSubmit.disabled = false;
-
-        if (error) {
-          authSubmit.textContent = "Verify Code";
-          authMessage.textContent = "Verification code incorrect ya expire ho gaya hai.";
-          return;
-        }
-
-        const notificationEvent = pendingVerification?.event || "Login";
-        currentUser = data.user || null;
-        pendingVerification = null;
-        verifyStep.style.display = "none";
-        authMessage.className = "auth-message auth-success";
-        authMessage.textContent = "✅ Email verified. Account activate ho gaya.";
-        await sendAuthNotification(notificationEvent);
-        await new Promise(resolve => setTimeout(resolve, 250));
-        closeAuth();
-        updateAccountUI();
-        updateDailyLimitUI();
-        showCreator();
-        await sendAuthNotification(pendingVerification?.event || "Login");
-        showStatus("✅ Email verification complete. Ab AI video generator unlocked hai.", "success");
         return;
       }
 
       authSubmit.disabled = true;
       authSubmit.textContent = "Logging in...";
 
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({
+        email,
+        password
+      });
 
       authSubmit.disabled = false;
       authSubmit.textContent = "Login";
 
       if (error) {
-        if (error.message?.toLowerCase().includes("email not confirmed")) {
-          authSubmit.disabled = true;
-          authSubmit.textContent = "Sending OTP...";
-          const otpResult = await supabaseClient.auth.signInWithOtp({
-            email,
-            options: { shouldCreateUser: false }
-          });
-          authSubmit.disabled = false;
-          authSubmit.textContent = "Login";
-          if (otpResult.error) {
-            const otpError = String(otpResult.error.message || "").toLowerCase();
-            authMessage.className = "auth-message auth-error";
-            if (otpError.includes("rate limit") || otpError.includes("too many") || otpError.includes("over_email_send_rate_limit")) {
-              authMessage.textContent = "⚠️ Verification email limit reached. Abhi naya code send nahi ho sakta. Thori der baad dobara try karein.";
-            } else {
-              authMessage.textContent = "Verification code send nahi ho saka: " + otpResult.error.message;
-            }
-            return;
-          }
-          pendingVerification = { email, type: "email", event: "Login" };
-          verifyStep.style.display = "block";
-          authMessage.className = "auth-message auth-success";
-          authMessage.textContent = "Email verify nahi hui. 6-digit verification code aap ke email par bhej diya gaya hai.";
-          verifyCode.focus();
+        const message = String(error.message || "");
+        if (message.toLowerCase().includes("email not confirmed")) {
+          pendingVerificationEmail = email;
+          resendVerificationBtn.style.display = "block";
+          authMessage.className = "auth-message";
+          authMessage.textContent =
+            "⚠️ Email abhi verify nahi hui. Neeche se verification email dobara bhej sakte hain.";
         } else {
-          authMessage.textContent = error.message;
+          authMessage.textContent = message;
         }
         return;
       }
@@ -1651,6 +1596,40 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       updateDailyLimitUI();
       showCreator();
       showStatus("✅ Login successful. AI video generator unlock ho gaya.", "success");
+    });
+
+    resendVerificationBtn.addEventListener("click", async () => {
+      const email = (pendingVerificationEmail || authEmail.value || "").trim().toLowerCase();
+
+      if (!email) {
+        authMessage.textContent = "Pehle apna email address enter karein.";
+        return;
+      }
+
+      resendVerificationBtn.disabled = true;
+      resendVerificationBtn.textContent = "Sending...";
+
+      const { error } = await supabaseClient.auth.resend({
+        type: "signup",
+        email,
+        options: { emailRedirectTo: SITE_URL }
+      });
+
+      resendVerificationBtn.disabled = false;
+      resendVerificationBtn.textContent = "Resend verification email";
+
+      if (error) {
+        const msg = String(error.message || "");
+        if (msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("too many")) {
+          authMessage.textContent = "⚠️ Email sending limit temporarily reached. Thori dair baad dobara try karein.";
+        } else {
+          authMessage.textContent = "Verification email send nahi ho saki: " + msg;
+        }
+        return;
+      }
+
+      authMessage.className = "auth-message auth-success";
+      authMessage.textContent = "✅ Verification email dobara bhej di gayi. Inbox, Spam aur Promotions check karein.";
     });
 
     loginTab.addEventListener("click", () => setAuthMode("login"));
@@ -1853,7 +1832,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       }
     });
 
-    supabaseClient.auth.onAuthStateChange((event, session) => {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
       currentUser = session?.user || null;
 
       if (event === "PASSWORD_RECOVERY") {
@@ -1862,6 +1841,24 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           openForgotPassword(true);
         }, 0);
         return;
+      }
+
+      if (event === "SIGNED_IN" && session?.user) {
+        const pendingEvent = localStorage.getItem("shortforge_pending_auth_event");
+
+        if (pendingEvent) {
+          localStorage.removeItem("shortforge_pending_auth_event");
+          pendingVerificationEmail = null;
+          await sendAuthNotification(pendingEvent);
+        }
+
+        if (session.user.email_confirmed_at) {
+          pendingVerificationEmail = null;
+          resendVerificationBtn.style.display = "none";
+          updateAccountUI();
+          updateDailyLimitUI();
+          showCreator();
+        }
       }
 
       updateAccountUI();
