@@ -1548,8 +1548,8 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       if (pendingVerification) {
         const token = verifyCode.value.trim();
 
-        if (!/^\d{6,8}$/.test(token)) {
-          authMessage.textContent = "Verification code enter karein.";
+        if (!/^\d{6}$/.test(token)) {
+          authMessage.textContent = "6-digit verification code enter karein.";
           return;
         }
 
