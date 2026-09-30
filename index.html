@@ -318,6 +318,13 @@
       background: black;
       display: block;
     }
+    .result-video-heading { font-size:18px; font-weight:900; margin-bottom:10px; color:#f8fbff; }
+    .slow-editor, .slow-result { margin-top:18px; padding:18px; border-radius:16px; background:rgba(79,140,255,.06); border:1px solid rgba(79,140,255,.18); }
+    .slow-result { display:none; background:rgba(53,208,127,.06); border-color:rgba(53,208,127,.18); }
+    .slow-title { font-size:16px; font-weight:900; margin-bottom:6px; }
+    .slow-copy { color:#9eacc5; font-size:12px; line-height:1.6; margin-bottom:12px; }
+    .slow-editor .generate-btn { margin-top:0; }
+    .slow-status { min-height:18px; margin-top:9px; color:#aebbd3; font-size:12px; line-height:1.5; white-space:pre-wrap; }
 
     .result-info {
       display: none;
@@ -814,10 +821,27 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         <div id="status" class="status"></div>
 
         <div id="videoBox" class="video-box">
-          <video id="videoPlayer" controls playsinline></video>
+          <div class="result-video-heading">Video Created Successfully</div>
+          <video id="videoPlayer" controls playsinline preload="metadata"></video>
           <div class="links">
-            <a id="openVideo" href="#" target="_blank">▶ Open Video</a>
-            <a id="downloadVideo" href="#" target="_blank" download>⬇ Download</a>
+            <a id="openVideo" href="#" target="_blank" rel="noopener">▶ Open Video</a>
+            <a id="downloadVideo" href="#" target="_blank" rel="noopener" download>⬇ Download</a>
+          </div>
+
+          <div id="slowMotionEditor" class="slow-editor">
+            <div class="slow-title">🎬 Video ko edit karke Full Slow Motion mein karo</div>
+            <div class="slow-copy">Poore generated video ko slow karke nayi copy banayein. Original video safe rahegi.</div>
+            <button id="slowMotionBtn" class="generate-btn" type="button">Make Full Slow Motion</button>
+            <div id="slowMotionStatus" class="slow-status" aria-live="polite"></div>
+          </div>
+
+          <div id="slowMotionResult" class="slow-result">
+            <div class="result-video-heading">Slow Motion Video Ready</div>
+            <video id="slowMotionPlayer" controls playsinline preload="metadata"></video>
+            <div class="links">
+              <a id="openSlowMotion" href="#" target="_blank" rel="noopener">▶ Open Slow Motion</a>
+              <a id="downloadSlowMotion" href="#" target="_blank" rel="noopener" download>⬇ Download</a>
+            </div>
           </div>
         </div>
 
@@ -1012,6 +1036,13 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     const resultTopic = document.getElementById("resultTopic");
     const resultNarration = document.getElementById("resultNarration");
     const narrationBadge = document.getElementById("narrationBadge");
+    let lastGenerationId = null;
+    const slowMotionBtn = document.getElementById("slowMotionBtn");
+    const slowMotionStatus = document.getElementById("slowMotionStatus");
+    const slowMotionResult = document.getElementById("slowMotionResult");
+    const slowMotionPlayer = document.getElementById("slowMotionPlayer");
+    const openSlowMotion = document.getElementById("openSlowMotion");
+    const downloadSlowMotion = document.getElementById("downloadSlowMotion");
 
     const authBackdrop = document.getElementById("authBackdrop");
     const closeAuthBtn = document.getElementById("closeAuthBtn");
@@ -1366,6 +1397,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         : { add_narration: true, return_metadata: true };
 
       let generationId = null;
+      lastGenerationId = null;
 
       try {
         const { data: sessionData } = await supabaseClient.auth.getSession();
@@ -1410,6 +1442,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         }
 
         generationId = data?.generation_id || null;
+        lastGenerationId = generationId;
 
         const videoUrl = findVideoUrl(data);
         const generatedTopic = findFirstValue(data, [
@@ -1446,6 +1479,10 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         openVideo.href = videoUrl;
         downloadVideo.href = videoUrl;
         videoBox.style.display = "block";
+        slowMotionResult.style.display = "none";
+        slowMotionStatus.textContent = "";
+        slowMotionBtn.disabled = false;
+        slowMotionBtn.textContent = "Make Full Slow Motion";
 
         showStatus(
           narration
@@ -1728,6 +1765,62 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     document.addEventListener("keydown", function(event) {
       if (event.key === "Escape" && previewModal.classList.contains("show")) {
         closePreview();
+      }
+    });
+
+    slowMotionBtn.addEventListener("click", async () => {
+      if (!currentUser || !lastGenerationId) {
+        slowMotionStatus.textContent = "Login session ya generation ID missing hai. Dobara login karein.";
+        return;
+      }
+
+      slowMotionBtn.disabled = true;
+      slowMotionBtn.textContent = "Creating Slow Motion...";
+      slowMotionStatus.textContent = "⏳ Poora video process ho raha hai. Original video overwrite nahi hogi.";
+
+      try {
+        const { data: sessionData } = await supabaseClient.auth.getSession();
+        const accessToken = sessionData.session?.access_token;
+        if (!accessToken) throw new Error("Session expire ho gayi hai. Dobara login karein.");
+
+        const response = await fetch(SUPABASE_URL + "/functions/v1/slow-motion-video", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + accessToken,
+            "apikey": SUPABASE_PUBLISHABLE_KEY
+          },
+          body: JSON.stringify({ generation_id: lastGenerationId })
+        });
+
+        const bodyText = await response.text();
+        let data;
+        try { data = JSON.parse(bodyText); } catch { data = { error: bodyText }; }
+
+        if (data?.slow_motion_url) {
+          slowMotionPlayer.src = data.slow_motion_url;
+          openSlowMotion.href = data.slow_motion_url;
+          downloadSlowMotion.href = data.slow_motion_url;
+          slowMotionResult.style.display = "block";
+
+          if (data.status === "processing") {
+            slowMotionStatus.textContent = "⏳ Slow-motion video processing mein hai. Thori dair baad button dobara press karein.";
+            slowMotionBtn.disabled = false;
+            slowMotionBtn.textContent = "Check Slow Motion";
+          } else {
+            slowMotionStatus.textContent = "✅ Slow Motion Video Ready";
+            slowMotionBtn.disabled = false;
+            slowMotionBtn.textContent = "Make Full Slow Motion";
+          }
+          return;
+        }
+
+        throw new Error(data?.error || "Slow motion processing failed.");
+      } catch (error) {
+        console.error("Slow motion error:", error);
+        slowMotionStatus.textContent = "❌ Slow Motion Processing Failed\n" + (error.message || "Unknown processing error");
+        slowMotionBtn.disabled = false;
+        slowMotionBtn.textContent = "Make Full Slow Motion";
       }
     });
 
