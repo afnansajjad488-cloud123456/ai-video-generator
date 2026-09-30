@@ -949,7 +949,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
             <input id="authPassword" type="password" placeholder="Minimum 6 characters" autocomplete="current-password" required>
             <button id="togglePassword" class="password-toggle" type="button">Show</button>
           </div>
-          <div class="password-hint">Use at least 6 characters for this demo account.</div>
+          <div class="password-hint">Use at least 8 characters with a mix of letters and numbers.</div>
           <button id="forgotPasswordLink" class="forgot-link" type="button">Forgot password?</button>
         </div>
 
@@ -1112,7 +1112,14 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       currentUser = data.session?.user || null;
       updateAccountUI();
       updateDailyLimitUI();
-      if (currentUser) showCreator();
+      if (currentUser) {
+        const pendingEvent = localStorage.getItem("shortforge_pending_auth_event");
+        if (pendingEvent && currentUser.email_confirmed_at) {
+          localStorage.removeItem("shortforge_pending_auth_event");
+          await sendAuthNotification(pendingEvent);
+        }
+        showCreator();
+      }
     }
 
     function getCurrentUser() { return currentUser; }
@@ -1503,8 +1510,8 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       const email = authEmail.value.trim().toLowerCase();
       const password = authPassword.value;
 
-      if (!email || password.length < 6) {
-        authMessage.textContent = "Email aur kam az kam 6-character password dein.";
+      if (!email || password.length < 8) {
+        authMessage.textContent = "Valid email aur kam az kam 8-character password dein.";
         return;
       }
 
@@ -1655,8 +1662,8 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         const newPassword = resetPassword.value;
         const confirmPassword = resetConfirm.value;
 
-        if (newPassword.length < 6) {
-          resetMessage.textContent = "New password kam az kam 6 characters ka ho.";
+        if (newPassword.length < 8) {
+          resetMessage.textContent = "New password kam az kam 8 characters ka ho.";
           return;
         }
         if (newPassword !== confirmPassword) {
