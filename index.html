@@ -1603,7 +1603,13 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           authSubmit.disabled = false;
           authSubmit.textContent = "Login";
           if (otpResult.error) {
-            authMessage.textContent = "Verification code send nahi ho saka: " + otpResult.error.message;
+            const otpError = String(otpResult.error.message || "").toLowerCase();
+            authMessage.className = "auth-message auth-error";
+            if (otpError.includes("rate limit") || otpError.includes("too many") || otpError.includes("over_email_send_rate_limit")) {
+              authMessage.textContent = "⚠️ Verification email limit reached. Abhi naya code send nahi ho sakta. Thori der baad dobara try karein.";
+            } else {
+              authMessage.textContent = "Verification code send nahi ho saka: " + otpResult.error.message;
+            }
             return;
           }
           pendingVerification = { email, type: "email" };
