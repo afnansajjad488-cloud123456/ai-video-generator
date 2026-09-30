@@ -1019,7 +1019,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
   </div>
 
   <script>
-    const WEBHOOK_URL = "https://afnan804302.app.n8n.cloud/webhook/generate-short";
     const SUPABASE_URL = "https://smrldvduiaowdmwkvgos.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_TTXChi3QrYp1sYvbb4ywbA_joBfB7cJ";
     const SITE_URL = "https://afnansajjad488-cloud123456.github.io/ai-video-generator/";
@@ -1276,27 +1275,6 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       }
       const usage = await getDailyUsage(currentUser);
       el.textContent = "Today: " + usage.count + "/4 videos used • " + Math.max(0, 4 - usage.count) + " remaining";
-    }
-
-    async function claimDailyGeneration(user, topic) {
-      const { data, error } = await supabaseClient.rpc("claim_daily_video_generation", {
-        p_topic: topic || null
-      });
-      if (error) throw error;
-      return data;
-    }
-
-    async function finalizeGeneration(generationId, patch) {
-      if (!generationId || !currentUser) return;
-
-      const { error } = await supabaseClient.rpc("finalize_video_generation", {
-        p_generation_id: generationId,
-        p_video_url: patch?.video_url || null,
-        p_narration: patch?.narration || null,
-        p_status: patch?.status || "success"
-      });
-
-      if (error) console.error("Generation finalize error:", error);
     }
 
     function requireLogin() {
