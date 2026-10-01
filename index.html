@@ -1923,6 +1923,10 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         let data;
         try { data = JSON.parse(bodyText); } catch { data = { error: bodyText }; }
 
+        if (!response.ok && response.status !== 202) {
+          throw new Error(data?.error || "Slow motion processing failed.");
+        }
+
         if (data?.slow_motion_url) {
           slowMotionPlayer.src = data.slow_motion_url;
           openSlowMotion.href = data.slow_motion_url;
@@ -1930,14 +1934,66 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           slowMotionResult.style.display = "block";
 
           if (data.status === "processing") {
-            slowMotionStatus.textContent = "⏳ Slow-motion video processing mein hai. Thori dair baad button dobara press karein.";
-            slowMotionBtn.disabled = false;
-            slowMotionBtn.textContent = "Check Slow Motion";
-          } else {
-            slowMotionStatus.textContent = "✅ Slow Motion Video Ready";
-            slowMotionBtn.disabled = false;
-            slowMotionBtn.textContent = "Make Full Slow Motion";
+            slowMotionStatus.textContent = "⏳ Real slow-motion video Cloudinary par generate ho rahi hai...";
+
+            // Keep checking automatically until the derived video is actually ready.
+            let readyData = null;
+            for (let attempt = 1; attempt <= 15; attempt++) {
+              await new Promise(resolve => setTimeout(resolve, 4000));
+
+              const { data: pollSession } = await supabaseClient.auth.getSession();
+              const pollToken = pollSession.session?.access_token;
+              if (!pollToken) throw new Error("Session expire ho gayi hai. Dobara login karein.");
+
+              const pollResponse = await fetch(SUPABASE_URL + "/functions/v1/slow-motion-video", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": "Bearer " + pollToken,
+                  "apikey": SUPABASE_PUBLISHABLE_KEY
+                },
+                body: JSON.stringify({ generation_id: lastGenerationId })
+              });
+
+              const pollText = await pollResponse.text();
+              let pollData;
+              try { pollData = JSON.parse(pollText); } catch { pollData = { error: pollText }; }
+
+              if (!pollResponse.ok && pollResponse.status !== 202) {
+                throw new Error(pollData?.error || "Slow motion processing failed.");
+              }
+
+              if (pollData?.slow_motion_url) {
+                slowMotionPlayer.src = pollData.slow_motion_url;
+                openSlowMotion.href = pollData.slow_motion_url;
+                downloadSlowMotion.href = pollData.slow_motion_url;
+              }
+
+              if (pollData?.status === "success") {
+                readyData = pollData;
+                break;
+              }
+
+              slowMotionStatus.textContent =
+                "⏳ Real slow-motion video generate ho rahi hai... " +
+                Math.round((attempt * 4)) + "s";
+            }
+
+            if (!readyData) {
+              slowMotionBtn.disabled = false;
+              slowMotionBtn.textContent = "Check Slow Motion";
+              slowMotionStatus.textContent =
+                "⏳ Slow-motion video abhi processing mein hai. Button dobara press karke status check karein.";
+              return;
+            }
           }
+
+          slowMotionPlayer.load();
+          slowMotionResult.style.display = "block";
+          slowMotionStatus.textContent =
+            "✅ Full Slow Motion Video Ready — original video safe hai.";
+          slowMotionBtn.disabled = false;
+          slowMotionBtn.textContent = "Make Full Slow Motion";
           return;
         }
 
