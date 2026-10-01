@@ -1163,19 +1163,38 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     let pendingVerificationEmail = null;
     let recoveryMode = false;
 
+    function isUserVerified(user = currentUser) {
+      return !!user?.email_confirmed_at;
+    }
+
+    function showVerificationRequired(user = currentUser) {
+      pendingVerificationEmail = user?.email || pendingVerificationEmail || null;
+      showAuthPage("login");
+      authMessage.className = "auth-message";
+      authMessage.textContent =
+        "⚠️ Account verification required hai. Pehle apni email verify karein, phir website ka creator unlock hoga.";
+      resendVerificationBtn.style.display = "block";
+    }
+
     async function loadAuthSession() {
       const { data } = await supabaseClient.auth.getSession();
       currentUser = data.session?.user || null;
-      updateAccountUI();
-      updateDailyLimitUI();
-      if (currentUser) {
+
+      if (currentUser && !isUserVerified(currentUser)) {
+        showVerificationRequired(currentUser);
+      } else if (currentUser) {
         const pendingEvent = localStorage.getItem("shortforge_pending_auth_event");
-        if (pendingEvent && currentUser.email_confirmed_at) {
+        if (pendingEvent) {
           localStorage.removeItem("shortforge_pending_auth_event");
           await sendAuthNotification(pendingEvent);
         }
         showCreator();
+      } else {
+        showLanding();
       }
+
+      updateAccountUI();
+      updateDailyLimitUI();
     }
 
     function getCurrentUser() { return currentUser; }
@@ -1256,6 +1275,11 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     }
 
     function showCreator() {
+      if (!isUserVerified()) {
+        showVerificationRequired();
+        return;
+      }
+
       landingPage.classList.remove("active");
       creatorPage.classList.add("active");
       flowNav.style.display = "flex";
@@ -1277,7 +1301,7 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
     }
 
     function updateAccountUI() {
-      if (currentUser) {
+      if (currentUser && isUserVerified()) {
         userChip.style.display = "block";
         userChip.textContent = "👤 " + (currentUser.user_metadata?.full_name || currentUser.email);
         loginTopBtn.style.display = "none";
@@ -1332,6 +1356,12 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
         showAuthPage("login");
         return false;
       }
+
+      if (!isUserVerified()) {
+        showVerificationRequired();
+        return false;
+      }
+
       return true;
     }
 
@@ -1940,6 +1970,13 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
       }
 
       if (event === "SIGNED_IN" && session?.user) {
+        if (!isUserVerified(session.user)) {
+          showVerificationRequired(session.user);
+          updateAccountUI();
+          updateDailyLimitUI();
+          return;
+        }
+
         const pendingEvent = localStorage.getItem("shortforge_pending_auth_event");
 
         if (pendingEvent) {
@@ -1948,13 +1985,11 @@ Agar blank chhor dein to AI khud interesting topic choose karega."></textarea>
           await sendAuthNotification(pendingEvent);
         }
 
-        if (session.user.email_confirmed_at) {
-          pendingVerificationEmail = null;
-          resendVerificationBtn.style.display = "none";
-          updateAccountUI();
-          updateDailyLimitUI();
-          showCreator();
-        }
+        pendingVerificationEmail = null;
+        resendVerificationBtn.style.display = "none";
+        updateAccountUI();
+        updateDailyLimitUI();
+        showCreator();
       }
 
       updateAccountUI();
