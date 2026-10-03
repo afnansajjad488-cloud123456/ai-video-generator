@@ -1426,148 +1426,156 @@
       return "";
     }
 
+    const N8N_WEBHOOKS = {
+      script: "https://founder-workstation.taila75704.ts.net:8443/webhook/generate-video",
+      assets: "https://founder-workstation.taila75704.ts.net:8443/webhook/generate-assets",
+      renderPrep: "https://founder-workstation.taila75704.ts.net:8443/webhook/prepare-render"
+    };
+
+    async function callN8n(url, payload) {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const text = await response.text();
+      let data;
+      try { data = JSON.parse(text); } catch { data = { raw: text }; }
+
+      if (!response.ok) {
+        throw new Error(
+          "n8n HTTP " + response.status + "\n\n" +
+          (data?.message || data?.error || text || "Unknown n8n error")
+        );
+      }
+      return data;
+    }
+
+    function extractJobId(data) {
+      return findFirstValue(data, ["job_id", "jobId", "id"]);
+    }
+
     async function generateVideo() {
       if (!requireLogin()) return;
 
-      const currentUser = getCurrentUser();
+      const user = getCurrentUser();
       const topic = topicInput.value.trim();
 
       generateBtn.disabled = true;
       generateBtn.textContent = "⏳ Generating Video...";
-
       videoBox.style.display = "none";
       resultInfo.classList.remove("show");
       resultTopic.textContent = "—";
       resultNarration.textContent = "—";
-      narrationBadge.textContent = "🎙️ Narration workflow enabled";
       videoPlayer.removeAttribute("src");
       openVideo.href = "#";
       downloadVideo.href = "#";
 
       showStatus(
-        "⏳ Secure server request start ho rahi hai...\n\nVideo generation mein kuch time lag sakta hai. Is page ko close na karein.",
+        "⏳ Step 1/3 — AI script aur scenes generate ho rahe hain...\n\n" +
+        "Page close na karein.",
         "loading"
       );
 
-      const requestBody = topic
-        ? { topic, add_narration: true, return_metadata: true }
-        : { add_narration: true, return_metadata: true };
-
-      let generationId = null;
-      lastGenerationId = null;
-
       try {
-        const { data: sessionData } = await supabaseClient.auth.getSession();
-        const accessToken = sessionData.session?.access_token;
+        // Workflow 1: create job + Gemini script/scenes.
+        const scriptData = await callN8n(N8N_WEBHOOKS.script, {
+          prompt: topic || "Create an interesting documentary-style Urdu video topic.",
+          language: "Urdu",
+          duration: 30,
+          aspect_ratio: "16:9",
+          resolution: "1080p",
+          style: "documentary",
+          voice: ""
+        });
 
-        if (!accessToken) {
-          throw new Error("Session expire ho gayi hai. Dobara login karein.");
+        const jobId = extractJobId(scriptData);
+        if (!jobId) {
+          throw new Error(
+            "Workflow 1 ne job_id return nahi ki.\n\nResponse:\n" +
+            JSON.stringify(scriptData, null, 2)
+          );
         }
 
-        const response = await fetch(
-          SUPABASE_URL + "/functions/v1/generate-video",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": "Bearer " + accessToken,
-              "apikey": SUPABASE_PUBLISHABLE_KEY
-            },
-            body: JSON.stringify(requestBody)
-          }
+        showStatus(
+          "✅ Step 1/3 complete — Job ID: " + jobId +
+          "\n\n⏳ Step 2/3 — Images aur voice generate ho rahe hain...",
+          "loading"
         );
 
-        const responseText = await response.text();
+        // Workflow 2: generate scene images + ElevenLabs audio + upload assets.
+        const assetData = await callN8n(N8N_WEBHOOKS.assets, {
+          job_id: jobId
+        });
 
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch {
-          data = responseText;
-        }
+        showStatus(
+          "✅ Step 2/3 complete — scene assets ready.\n\n" +
+          "⏳ Step 3/3 — render manifest aur subtitles prepare ho rahe hain...",
+          "loading"
+        );
 
-        if (response.status === 429 || data?.allowed === false) {
-          await updateDailyLimitUI();
-          throw new Error("Aaj ki 4 video limit complete ho gayi hai. Kal dobara generate kar sakte hain.");
-        }
+        // Workflow 3: calculate timings + create SRT + mark render_ready.
+        const renderData = await callN8n(N8N_WEBHOOKS.renderPrep, {
+          job_id: jobId
+        });
 
-        if (!response.ok) {
-          throw new Error(
-            "Secure video service error " + response.status + "\n\n" +
-            (typeof data === "string" ? data : JSON.stringify(data))
-          );
-        }
+        const finalUrl = findVideoUrl(renderData) ||
+          findFirstValue(renderData, ["final_video_url", "video_url"]);
 
-        generationId = data?.generation_id || null;
-        lastGenerationId = generationId;
+        const generatedTopic =
+          findFirstValue(scriptData, ["title", "topic", "video_topic"]) ||
+          topic ||
+          "AI generated video";
 
-        const videoUrl = findVideoUrl(data);
-        const generatedTopic = findFirstValue(data, [
-          "topic",
-          "title",
-          "video_topic"
-        ]);
-        const narration = findFirstValue(data, [
-          "narration",
-          "narration_text",
-          "script"
-        ]);
+        const narration =
+          findFirstValue(scriptData, ["narration", "narration_text", "script"]) ||
+          "Script generated successfully.";
 
-        if (!videoUrl) {
-          throw new Error(
-            "Server se response mila, lekin video URL nahi mila.\n\nResponse:\n" +
-            responseText
-          );
-        }
-
-        await updateDailyLimitUI();
-
-        resultTopic.textContent = generatedTopic || topic || "AI generated topic";
-        resultNarration.textContent =
-          narration || "Narration text server response mein nahi mila.";
-
-        narrationBadge.textContent = narration
-          ? "🎙️ Narration text received"
-          : "⏳ Narration text pending from n8n";
-
+        resultTopic.textContent = generatedTopic;
+        resultNarration.textContent = narration;
         resultInfo.classList.add("show");
 
-        videoPlayer.src = videoUrl;
-        openVideo.href = videoUrl;
-        downloadVideo.href = videoUrl;
-        videoBox.style.display = "block";
-        slowMotionResult.style.display = "none";
-        slowMotionStatus.textContent = "";
-        slowMotionBtn.disabled = false;
-        slowMotionBtn.textContent = "Make Full Slow Motion";
+        if (finalUrl) {
+          videoPlayer.src = finalUrl;
+          openVideo.href = finalUrl;
+          downloadVideo.href = finalUrl;
+          videoBox.style.display = "block";
 
-        showStatus(
-          narration
-            ? "✅ Video successfully generate ho gayi aur topic + narration mil gayi."
-            : "✅ Video successfully generate ho gayi.",
-          "success"
-        );
-
-        resultInfo.scrollIntoView({ behavior: "smooth", block: "center" });
-
-      } catch (error) {
-        console.error("Video generation error:", error);
+          showStatus(
+            "🎉 Video ready!\n\nJob ID: " + jobId,
+            "success"
+          );
+        } else {
+          // The current Workflow 3 is a render-preparation workflow. It returns
+          // render_ready + manifest, not a final MP4 URL. Do not pretend the
+          // MP4 exists until Workflow 4 receives a real final_video_url.
+          showStatus(
+            "✅ Workflow complete up to render_ready.\n\n" +
+            "Job ID: " + jobId + "\n\n" +
+            "Script, images, voice assets and SRT manifest are prepared. " +
+            "The final MP4 renderer/upload step is still required before Workflow 4 can mark the job completed.",
+            "success"
+          );
+        }
 
         await updateDailyLimitUI();
 
+      } catch (error) {
+        console.error("AI video generation error:", error);
         showStatus(
-          "❌ Video generate nahi hui.\n\nError:\n" +
+          "❌ Video workflow failed.\n\n" +
           (error.message || "Unknown error") +
-          "\n\nAgar problem repeat ho to n8n execution aur Supabase logs check karein.",
+          "\n\nCheck the n8n execution log for the failed workflow.",
           "error"
         );
-
       } finally {
         generateBtn.disabled = false;
-        generateBtn.textContent = currentUser ? "🎬 Generate Video" : "🔐 Login / Sign up to Generate";
+        generateBtn.textContent = currentUser
+          ? "🎬 Generate Video"
+          : "🔐 Login / Sign up to Generate";
       }
     }
-
 
     async function sendAuthNotification(eventName) {
       try {
